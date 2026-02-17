@@ -341,6 +341,40 @@ function LandingPage({
 }
 
 export default function App() {
+  useEffect(() => {
+    const storageKey = "nerdvana-whoogle-warmup-at";
+    const minIntervalMs = 15 * 60 * 1000;
+
+    const maybeWarmupWhoogle = () => {
+      try {
+        const raw = window.localStorage.getItem(storageKey);
+        const lastAt = raw ? Number(raw) : 0;
+        const now = Date.now();
+        if (Number.isFinite(lastAt) && now - lastAt < minIntervalMs) return;
+        window.localStorage.setItem(storageKey, String(now));
+      } catch {
+        // Ignore storage failures and still try warmup.
+      }
+
+      void fetch("/api/whoogle-cron?source=client", {
+        method: "GET",
+        cache: "no-store",
+        keepalive: true
+      }).catch(() => {
+        // Warmup is best-effort only.
+      });
+    };
+
+    maybeWarmupWhoogle();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        maybeWarmupWhoogle();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
+
   const [entry, setEntry] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
