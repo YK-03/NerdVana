@@ -1,0 +1,143 @@
+import Header from "../components/Header";
+import { discoverItems } from "../mockDiscoverItems";
+
+interface ExplorePageProps {
+  onOpenItem: (slug: string) => void;
+  onNavigatePage: (page: string) => void;
+}
+
+export default function ExplorePage({
+  onOpenItem,
+  onNavigatePage
+}: ExplorePageProps) {
+  return (
+    <div
+      className="min-h-screen w-full transition-colors duration-300"
+      style={{ backgroundColor: "var(--nerdvana-conversation-bg)" }}
+    >
+      <div className="fixed inset-0 pointer-events-none paper-texture nerdvana-paper-texture-conversation" />
+      <div className="relative">
+        <Header
+          onNavigate={(page) => {
+            onNavigatePage(page);
+          }}
+        />
+
+        <main className="px-6 md:px-12 py-8 md:py-12">
+          <article className="max-w-4xl mx-auto">
+            <h1
+              className="text-3xl md:text-5xl font-black tracking-[-0.03em] leading-tight uppercase"
+              style={{
+                fontFamily: 'Impact, "Arial Black", sans-serif',
+                color: "var(--nerdvana-text)"
+              }}
+            >
+              Explore
+            </h1>
+            <p
+              className="mt-3 text-sm md:text-base leading-relaxed"
+              style={{
+                fontFamily: '"Times New Roman", serif',
+                color: "var(--nerdvana-text)",
+                opacity: 0.68
+              }}
+            >
+              Stories, universes, and ideas Nerdvana understands.
+            </p>
+
+            <section
+              className="mt-8 border-[2px] p-5 md:p-7 transition-colors duration-300"
+              style={{
+                borderColor: "var(--nerdvana-border)",
+                backgroundColor: "var(--nerdvana-message-bg)"
+              }}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+                {discoverItems.map((item) => (
+                  <button
+                    key={item.slug}
+                    className="nerdvana-clickable text-left border-[2px] p-4 md:p-5 transition-all duration-300 hover:-translate-y-0.5"
+                    style={{
+                      borderColor: "var(--nerdvana-border)",
+                      backgroundColor: "var(--nerdvana-surface)"
+                    }}
+                    onClick={() => onOpenItem(item.slug)}
+                  >
+                    <h2
+                      className="text-xl md:text-2xl uppercase tracking-[-0.02em]"
+                      style={{
+                        fontFamily: 'Impact, "Arial Black", sans-serif',
+                        color: "var(--nerdvana-text)"
+                      }}
+                    >
+                      {item.title}
+                    </h2>
+                    <span
+                      className="mt-2 inline-flex items-center text-[0.64rem] md:text-[0.7rem] uppercase tracking-[0.12em] border px-2 py-1"
+                      style={{
+                        fontFamily: '"Courier New", monospace',
+                        color: "var(--nerdvana-accent)",
+                        borderColor: "var(--nerdvana-border)",
+                        backgroundColor: "var(--nerdvana-message-bg)",
+                        opacity: 0.88
+                      }}
+                    >
+                      {item.type}
+                    </span>
+                    <p
+                      className="mt-3 text-[0.98rem] leading-7"
+                      style={{
+                        fontFamily: '"Times New Roman", serif',
+                        color: "var(--nerdvana-text)"
+                      }}
+                    >
+                      {item.description}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </section>
+          </article>
+        </main>
+      </div>
+
+      <style>{`
+        .paper-texture {
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='6.5' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+          background-repeat: repeat;
+        }
+
+        .nerdvana-paper-texture-conversation {
+          opacity: 0.04;
+          transition: opacity 0.3s ease;
+        }
+
+        .dark .nerdvana-paper-texture-conversation {
+          opacity: 0.08;
+        }
+
+        .legacy-nerdvana-cursor {
+          cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Crect x='2' y='9' width='10' height='8' rx='2' fill='%231a1918'/%3E%3Crect x='18' y='9' width='10' height='8' rx='2' fill='%231a1918'/%3E%3Crect x='12' y='11' width='6' height='4' fill='%238c1c13'/%3E%3Crect x='5' y='12' width='4' height='2' fill='%23ebe8df'/%3E%3Crect x='21' y='12' width='4' height='2' fill='%23ebe8df'/%3E%3Cpath d='M12 20 L18 20 L15 26 Z' fill='%238c1c13'/%3E%3C/svg%3E") 4 4, auto;
+        }
+
+        .dark .legacy-nerdvana-cursor {
+          cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Crect x='2' y='9' width='10' height='8' rx='2' fill='%234a4845'/%3E%3Crect x='18' y='9' width='10' height='8' rx='2' fill='%234a4845'/%3E%3Crect x='12' y='11' width='6' height='4' fill='%23a83228'/%3E%3Crect x='5' y='12' width='4' height='2' fill='%23f5f1e8'/%3E%3Crect x='21' y='12' width='4' height='2' fill='%23f5f1e8'/%3E%3Cpath d='M12 20 L18 20 L15 26 Z' fill='%23a83228'/%3E%3C/svg%3E") 4 4, auto;
+        }
+
+        .legacy-nerdvana-cursor button,
+        .legacy-nerdvana-cursor a,
+        .legacy-nerdvana-cursor .nerdvana-clickable {
+          cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Crect x='2' y='9' width='10' height='8' rx='2' fill='%238c1c13'/%3E%3Crect x='18' y='9' width='10' height='8' rx='2' fill='%238c1c13'/%3E%3Crect x='12' y='11' width='6' height='4' fill='%231a1918'/%3E%3Crect x='5' y='12' width='4' height='2' fill='%23fff8dc'/%3E%3Crect x='21' y='12' width='4' height='2' fill='%23fff8dc'/%3E%3Cpath d='M15 2 L18 9 L12 9 Z' fill='%231a1918'/%3E%3C/svg%3E") 4 4, pointer;
+        }
+
+        .dark .legacy-nerdvana-cursor button,
+        .dark .legacy-nerdvana-cursor a,
+        .dark .legacy-nerdvana-cursor .nerdvana-clickable {
+          cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Crect x='2' y='9' width='10' height='8' rx='2' fill='%23a83228'/%3E%3Crect x='18' y='9' width='10' height='8' rx='2' fill='%23a83228'/%3E%3Crect x='12' y='11' width='6' height='4' fill='%234a4845'/%3E%3Crect x='5' y='12' width='4' height='2' fill='%23f5f1e8'/%3E%3Crect x='21' y='12' width='4' height='2' fill='%23f5f1e8'/%3E%3Cpath d='M15 2 L18 9 L12 9 Z' fill='%234a4845'/%3E%3C/svg%3E") 4 4, pointer;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+
