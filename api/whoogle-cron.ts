@@ -24,14 +24,7 @@ function isAuthorized(request: Request): boolean {
   if (!secret) return true;
 
   const authHeader = request.headers.get("authorization");
-  if (authHeader === `Bearer ${secret}`) return true;
-
-  const url = new URL(request.url);
-  const isClientWarmup = url.searchParams.get("source") === "client";
-  const secFetchSite = request.headers.get("sec-fetch-site");
-  if (isClientWarmup && secFetchSite === "same-origin") return true;
-
-  return false;
+  return authHeader === `Bearer ${secret}`;
 }
 
 async function pingWhoogle(baseUrl: string): Promise<{ status: number; ok: boolean }> {
