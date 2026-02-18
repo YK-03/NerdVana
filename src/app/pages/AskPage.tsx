@@ -237,6 +237,7 @@ export default function AskPage({
   );
   const [followUpQuery, setFollowUpQuery] = useState("");
   const [isGeneratingFollowUp, setIsGeneratingFollowUp] = useState(false);
+  const restoredHasWebResultsRef = useRef(false);
 
   const handleSaveLorebook = async () => {
     if (!user) {
@@ -273,9 +274,11 @@ export default function AskPage({
       if (parsed.topic === fullQuestion) {
         console.log("Restoring active session from localStorage");
         setAnswer(parsed.answer || { summary: "", categories: [], spoilers: "" });
-        setResults(parsed.results || []);
+        const restoredResults = Array.isArray(parsed.results) ? parsed.results : [];
+        setResults(restoredResults);
         setCategorized(parsed.categorized || { canon: [], theories: [], spoilers: [] });
         setConversation(parsed.conversation || []);
+        restoredHasWebResultsRef.current = restoredResults.length > 0;
         isRestoringRef.current = true;
       }
     } catch (e) {
@@ -323,8 +326,12 @@ export default function AskPage({
 
     if (isRestoringRef.current) {
       console.log("Skipping search due to session restoration");
+      const hasRestoredWebResults = restoredHasWebResultsRef.current;
+      restoredHasWebResultsRef.current = false;
       isRestoringRef.current = false;
-      return;
+      if (hasRestoredWebResults) {
+        return;
+      }
     }
 
     Promise.resolve()
