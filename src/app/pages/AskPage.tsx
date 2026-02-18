@@ -181,8 +181,9 @@ export default function AskPage({
   question,
   onNavigatePage
 }: AskPageProps) {
-  const { question: queryQuestion, item: queryItem } = readAskQueryParams();
-  const fullQuestion = queryQuestion || question.trim();
+  const { item: queryItem } = readAskQueryParams();
+  const queryFromURL = new URLSearchParams(window.location.search).get("q") || "";
+  const fullQuestion = queryFromURL.trim();
   const inferredContext = useMemo(
     () => resolveContext(fullQuestion, queryItem),
     [fullQuestion, queryItem]
@@ -295,6 +296,14 @@ export default function AskPage({
       })
     );
   }, [fullQuestion, answer, results, categorized, conversation]);
+
+  useEffect(() => {
+    if (!queryFromURL) return;
+
+    console.log("[Nerdvana] Search trigger:", queryFromURL);
+
+    fetchSearchResults(queryFromURL);
+  }, [queryFromURL]);
 
   const [resultsSpoilers, setResultsSpoilers] = useState(false);
   const [chatSpoilers, setChatSpoilers] = useState(false);
