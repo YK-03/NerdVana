@@ -1,11 +1,6 @@
 export async function fetchSearchResults(query: string) {
-  const whoogleBase =
-    import.meta.env.VITE_WHOOGLE_BASE ||
-    import.meta.env.VITE_WHOOGLE_URL ||
-    "https://nerdvana-whoogle.onrender.com";
-
   try {
-    const url = `${whoogleBase.replace(/\/+$/, "")}/search?q=${encodeURIComponent(query)}&format=json`;
+    const url = `/api/search?q=${encodeURIComponent(query)}`;
     console.log("[Nerdvana] Whoogle request:", url);
     const res = await fetch(url);
     if (!res.ok) {
