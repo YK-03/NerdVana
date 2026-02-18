@@ -4,9 +4,7 @@ export async function fetchSearchResults(query: string) {
 
   try {
     const encodedQuery = encodeURIComponent(query);
-    const url = `${whoogleBase}/search?q=${encodedQuery}`;
-    console.log("[Nerdvana] Whoogle request:", url);
-    const res = await fetch(url);
+    const res = await fetch(`${whoogleBase}/search?q=${encodedQuery}`);
     if (!res.ok) {
       console.error("[Nerdvana] Whoogle fetch failed");
       return [];
