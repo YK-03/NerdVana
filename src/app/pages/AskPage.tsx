@@ -181,8 +181,10 @@ export default function AskPage({
   question,
   onNavigatePage
 }: AskPageProps) {
+  const [search, setSearch] = useState(() => window.location.search);
+  const location = useMemo(() => ({ search }), [search]);
+  const queryFromURL = new URLSearchParams(location.search).get("q") || "";
   const { item: queryItem } = readAskQueryParams();
-  const queryFromURL = new URLSearchParams(window.location.search).get("q") || "";
   const fullQuestion = queryFromURL.trim();
   const inferredContext = useMemo(
     () => resolveContext(fullQuestion, queryItem),
@@ -298,12 +300,34 @@ export default function AskPage({
   }, [fullQuestion, answer, results, categorized, conversation]);
 
   useEffect(() => {
+    const syncSearch = () => setSearch(window.location.search);
+    const originalPushState = window.history.pushState;
+    const originalReplaceState = window.history.replaceState;
+
+    window.history.pushState = function (...args) {
+      originalPushState.apply(this, args);
+      syncSearch();
+    };
+    window.history.replaceState = function (...args) {
+      originalReplaceState.apply(this, args);
+      syncSearch();
+    };
+    window.addEventListener("popstate", syncSearch);
+
+    return () => {
+      window.history.pushState = originalPushState;
+      window.history.replaceState = originalReplaceState;
+      window.removeEventListener("popstate", syncSearch);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!queryFromURL) return;
 
     console.log("[Nerdvana] Search trigger:", queryFromURL);
 
     fetchSearchResults(queryFromURL);
-  }, [queryFromURL]);
+  }, [location.search]);
 
   const [resultsSpoilers, setResultsSpoilers] = useState(false);
   const [chatSpoilers, setChatSpoilers] = useState(false);
