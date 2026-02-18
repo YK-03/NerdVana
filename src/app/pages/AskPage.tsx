@@ -182,8 +182,7 @@ export default function AskPage({
   onNavigatePage
 }: AskPageProps) {
   const { question: queryQuestion, item: queryItem } = readAskQueryParams();
-  const queryFromURL = queryQuestion;
-  const fullQuestion = queryFromURL || question.trim();
+  const fullQuestion = queryQuestion || question.trim();
   const inferredContext = useMemo(
     () => resolveContext(fullQuestion, queryItem),
     [fullQuestion, queryItem]
@@ -227,6 +226,7 @@ export default function AskPage({
   const [user] = useAuthState(auth);
   const lastSavedCaseKey = useRef("");
   const lastSavedQueryRef = useRef(isRestored ? fullQuestion : "");
+  const isRestoringRef = useRef(false);
 
   const [currentHistoryId, setCurrentHistoryId] = useState<string | null>(
     isRestored && historyState.historyId ? historyState.historyId : null
@@ -237,6 +237,7 @@ export default function AskPage({
   );
   const [followUpQuery, setFollowUpQuery] = useState("");
   const [isGeneratingFollowUp, setIsGeneratingFollowUp] = useState(false);
+  const restoredHasWebResultsRef = useRef(false);
 
   const handleSaveLorebook = async () => {
     if (!user) {
@@ -277,17 +278,13 @@ export default function AskPage({
         setResults(restoredResults);
         setCategorized(parsed.categorized || { canon: [], theories: [], spoilers: [] });
         setConversation(parsed.conversation || []);
+        restoredHasWebResultsRef.current = restoredResults.length > 0;
+        isRestoringRef.current = true;
       }
     } catch (e) {
       console.error("Failed to restore session", e);
     }
   }, []);
-
-  useEffect(() => {
-    if (!queryFromURL) return;
-    console.log("[Nerdvana] Trigger search:", queryFromURL);
-    void fetchSearchResults(queryFromURL).catch(() => []);
-  }, [queryFromURL]);
 
   useEffect(() => {
     if (!fullQuestion) return;
@@ -325,6 +322,16 @@ export default function AskPage({
       return () => {
         isCancelled = true;
       };
+    }
+
+    if (isRestoringRef.current) {
+      console.log("Skipping search due to session restoration");
+      const hasRestoredWebResults = restoredHasWebResultsRef.current;
+      restoredHasWebResultsRef.current = false;
+      isRestoringRef.current = false;
+      if (hasRestoredWebResults) {
+        return;
+      }
     }
 
     Promise.resolve()
