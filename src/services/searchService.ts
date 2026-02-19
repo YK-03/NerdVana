@@ -1,18 +1,22 @@
 export async function fetchSearchResults(query: string) {
   try {
     const url = `/api/search?q=${encodeURIComponent(query)}`;
-    console.log("[Nerdvana] Whoogle request:", url);
+    console.log("[Nerdvana] Search request:", url);
+
     const res = await fetch(url);
     if (!res.ok) {
-      console.error("[Nerdvana] Whoogle fetch failed");
+      console.error("[Nerdvana] Search fetch failed");
       return [];
     }
 
     const data = await res.json();
-    const rows = Array.isArray(data?.results) ? data.results : Array.isArray(data) ? data : [];
+    console.log("SERPER RAW RESPONSE:", data);
+
+    const rows = Array.isArray(data) ? data : [];
 
     return rows.map((r: any) => {
-      const targetUrl = r?.href || r?.url || r?.link || "";
+      const targetUrl = r?.url || "";
+
       let source = "";
       if (targetUrl) {
         try {
@@ -23,14 +27,14 @@ export async function fetchSearchResults(query: string) {
       }
 
       return {
-        title: r?.title || r?.text || "",
+        title: r?.title || "",
         url: targetUrl,
-        snippet: r?.snippet || r?.text || r?.content || "",
+        snippet: r?.snippet || "",
         source,
       };
     });
-  } catch {
-    console.error("[Nerdvana] Whoogle fetch failed");
+  } catch (e) {
+    console.error("[Nerdvana] Search fetch failed:", e);
     return [];
   }
 }

@@ -322,23 +322,6 @@ export default function AskPage({
   }, []);
 
   useEffect(() => {
-    if (!queryFromURL) return;
-
-    console.log("[Nerdvana] Search trigger:", queryFromURL);
-
-    fetchSearchResults(queryFromURL);
-  }, [location.search]);
-
-  const [resultsSpoilers, setResultsSpoilers] = useState(false);
-  const [chatSpoilers, setChatSpoilers] = useState(false);
-
-  const spoilerFilter = (items: ResultLink[]) => {
-    if (resultsSpoilers) return items;
-    const regex = /(ending explained|dies|death|final scene|plot twist|spoiler)/i;
-    return items.filter(r => !regex.test(((r.title || "") + (r.snippet || "")).toLowerCase()));
-  };
-
-  useEffect(() => {
     let isCancelled = false;
     const normalizedQuestion = fullQuestion.trim();
 
@@ -352,48 +335,38 @@ export default function AskPage({
       };
     }
 
-    Promise.resolve()
-      .then(async () => {
-        const whoogleLinks = await fetchSearchResults(normalizedQuestion).catch(() => []);
-        if (isCancelled) return null;
+    const runSearch = async () => {
+      try {
+        const searchLinks = await fetchSearchResults(normalizedQuestion).catch(() => []);
+        if (isCancelled) return;
+
+        const rawResults = searchLinks.map((link) => ({
+          title: link.title,
+          url: link.url,
+          source: link.source,
+          snippet: link.snippet
+        }));
 
         const categorizedResults: CategorizedResults = {
           canon: [],
           theories: [],
           spoilers: []
         };
-
-        whoogleLinks.forEach((r) => {
-          const link: ResultLink = {
-            title: r.title,
-            url: r.url,
-            source: r.source,
-            snippet: r.snippet
-          };
+        rawResults.forEach((link) => {
           categorizedResults[classifyResult(link)].push(link);
         });
 
-        if (!contextIsValid || !resolvedItem) {
-          return { resolved: null, whoogleLinks, categorized: categorizedResults };
+        let resolved = null;
+        if (contextIsValid && resolvedItem) {
+          try {
+            resolved = await resolveStaticAnswerWithAISummary(fullQuestion, resolvedItem, {
+              snippets: searchLinks.map((l) => l.snippet).join("\n")
+            });
+          } catch {
+            resolved = null;
+          }
         }
-
-        const resolved = await resolveStaticAnswerWithAISummary(fullQuestion, resolvedItem, {
-          snippets: whoogleLinks.map((link) => link.snippet).join("\n")
-        });
-        if (isCancelled) return null;
-
-        return { resolved, whoogleLinks, categorized: categorizedResults };
-      })
-      .then(async (result) => {
-        if (isCancelled || !result) return;
-        const { resolved, whoogleLinks, categorized: categorizedResults } = result;
-
-        const rawResults = whoogleLinks.map((link) => ({
-          title: link.title,
-          url: link.url,
-          source: link.source,
-          snippet: link.snippet
-        }));
+        if (isCancelled) return;
 
         setResults(rawResults);
         setCategorized(categorizedResults);
@@ -417,41 +390,54 @@ export default function AskPage({
             if (historyState.conversation && conversation.length === 0) {
               setConversation(historyState.conversation);
             }
-
           } else {
             console.log("Creating new history session for:", user.uid, normalizedQuestion);
-            const docRef = await addDoc(collection(db, "users", user.uid, "history"), {
-              query: normalizedQuestion,
-              conversation: [],
-              results: rawResults.map((r: any) => ({ title: r.title, url: r.url })),
-              createdAt: serverTimestamp()
-            });
+            try {
+              const docRef = await addDoc(collection(db, "users", user.uid, "history"), {
+                query: normalizedQuestion,
+                conversation: [],
+                results: rawResults.map((r: any) => ({ title: r.title, url: r.url })),
+                createdAt: serverTimestamp()
+              });
 
-            setCurrentHistoryId(docRef.id);
-            lastSavedQueryRef.current = normalizedQuestion;
+              if (isCancelled) return;
+              setCurrentHistoryId(docRef.id);
+              lastSavedQueryRef.current = normalizedQuestion;
 
-            window.history.replaceState({
-              ...historyState,
-              historySaved: true,
-              historyId: docRef.id,
-              query: normalizedQuestion
-            }, "");
+              window.history.replaceState({
+                ...historyState,
+                historySaved: true,
+                historyId: docRef.id,
+                query: normalizedQuestion
+              }, "");
+            } catch (error) {
+              console.error("Failed to save history session", error);
+            }
           }
         }
-      })
-      .catch(() => {
+      } catch {
         if (isCancelled) return;
         setAnswer({ summary: "", categories: [], spoilers: "" });
         setResults([]);
         setCategorized({ canon: [], theories: [], spoilers: [] });
-      });
+      }
+    };
+
+    runSearch();
 
     return () => {
       isCancelled = true;
     };
   }, [contextIsValid, fullQuestion, resolvedItem, user]);
 
+  const [resultsSpoilers, setResultsSpoilers] = useState(false);
+  const [chatSpoilers, setChatSpoilers] = useState(false);
 
+  const spoilerFilter = (items: ResultLink[]) => {
+    if (resultsSpoilers) return items;
+    const regex = /(ending explained|dies|death|final scene|plot twist|spoiler)/i;
+    return items.filter(r => !regex.test(((r.title || "") + (r.snippet || "")).toLowerCase()));
+  };
   useEffect(() => {
     if (!contextIsValid || isAmbiguous || !resolvedItem) {
       return;
