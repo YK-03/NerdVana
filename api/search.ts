@@ -1,10 +1,24 @@
-console.log("SERPER KEY:", process.env.SERPER_API_KEY);
-export default async function handler(request: Request) {
+export default async function handler(req: any, res?: any) {
   try {
-    const { searchParams } = new URL(request.url);
-    const q = searchParams.get("q") || "";
+    let q = ""
 
-    console.log("[Nerdvana] Serper request:", q);
+    if (req.url) {
+      const url = new URL(req.url, "http://localhost")
+      q = url.searchParams.get("q") || ""
+    } else if (req.query) {
+      q = req.query.q || ""
+    }
+
+    console.log("[Nerdvana] SERPER QUERY:", q)
+
+    if (!q) {
+      const empty = JSON.stringify([])
+      if (res) return res.status(200).send(empty)
+      return new Response(empty, {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    }
 
     const r = await fetch("https://google.serper.dev/search", {
       method: "POST",
@@ -17,11 +31,13 @@ export default async function handler(request: Request) {
         gl: "in",
         hl: "en",
       }),
-    });
+    })
 
-    const data = await r.json();
+    const data = await r.json()
 
-    const rows = Array.isArray(data?.organic) ? data.organic : [];
+    console.log("[Nerdvana] SERPER RAW:", data)
+
+    const rows = Array.isArray(data?.organic) ? data.organic : []
 
     const results = rows.map((r: any) => ({
       title: r.title || "",
@@ -29,23 +45,28 @@ export default async function handler(request: Request) {
       snippet: r.snippet || "",
       source: (() => {
         try {
-          return new URL(r.link).hostname;
+          return new URL(r.link).hostname
         } catch {
-          return "";
+          return ""
         }
       })(),
-    }));
+    }))
+
+    if (res) {
+      return res.status(200).json(results)
+    }
 
     return new Response(JSON.stringify(results), {
       status: 200,
       headers: { "Content-Type": "application/json" },
-    });
+    })
   } catch (e) {
-    console.error("[Nerdvana] Serper error:", e);
+    console.error("[Nerdvana] SERPER ERROR:", e)
 
+    if (res) return res.status(200).json([])
     return new Response(JSON.stringify([]), {
       status: 200,
       headers: { "Content-Type": "application/json" },
-    });
+    })
   }
 }
