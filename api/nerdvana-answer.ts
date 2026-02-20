@@ -3,6 +3,41 @@ type ConversationMessage = {
   content: string;
 };
 
+function jsonResponse(
+  payload: unknown,
+  status: number,
+  res?: any
+): Response | unknown {
+  if (res && typeof res.status === "function" && typeof res.json === "function") {
+    return res.status(status).json(payload);
+  }
+
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { "Content-Type": "application/json" }
+  });
+}
+
+async function readBody(req: any): Promise<any> {
+  if (req && typeof req.json === "function") {
+    return req.json();
+  }
+
+  if (req?.body && typeof req.body === "object") {
+    return req.body;
+  }
+
+  if (typeof req?.body === "string") {
+    try {
+      return JSON.parse(req.body);
+    } catch {
+      return {};
+    }
+  }
+
+  return {};
+}
+
 function normalizeConversation(input: unknown): ConversationMessage[] {
   if (!Array.isArray(input)) {
     return [];
@@ -118,13 +153,15 @@ function buildFollowups(query: string): string[] {
   ];
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== "POST") {
-    return Response.json({ error: "Method Not Allowed" }, { status: 405 });
+export default async function handler(req: any, res?: any): Promise<Response | unknown> {
+  const method = String(req?.method ?? "POST").toUpperCase();
+
+  if (method !== "POST") {
+    return jsonResponse({ error: "Method Not Allowed" }, 405, res);
   }
 
   try {
-    const body = await request.json();
+    const body = await readBody(req);
 
     const query = String(body?.query ?? "").trim();
     const conversation = normalizeConversation(body?.conversation);
@@ -134,15 +171,16 @@ export default async function handler(request: Request): Promise<Response> {
         : Boolean(body?.allowSpoilers);
 
     if (!query) {
-      return Response.json({ error: "Query is required" }, { status: 400 });
+      return jsonResponse({ error: "Query is required" }, 400, res);
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      return Response.json(
+      return jsonResponse(
         { error: "Missing GEMINI_API_KEY in Vercel env variables" },
-        { status: 500 }
+        500,
+        res
       );
     }
 
@@ -150,19 +188,20 @@ export default async function handler(request: Request): Promise<Response> {
     const answer = await generateAnswer(prompt, apiKey);
     const followups = buildFollowups(query);
 
-    return Response.json({
+    return jsonResponse({
       answer,
       sources: [],
       followups
-    });
+    }, 200, res);
   } catch (error: unknown) {
     console.error("Generation Failed", error);
-    return Response.json(
+    return jsonResponse(
       {
         error: "Generation Failed",
         details: "Unable to generate an answer right now. Please try again."
       },
-      { status: 500 }
+      500,
+      res
     );
   }
 }
