@@ -212,7 +212,7 @@ export default async function handler(req: any, res?: any) {
     return jsonResponse(
       {
         error: "Generation Failed",
-        details: "Unable to generate an answer right now. Please try again."
+        details: String(error)
       },
       500,
       res
