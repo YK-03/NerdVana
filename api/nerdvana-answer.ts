@@ -1,5 +1,3 @@
-export const runtime = "edge";
-
 type ConversationMessage = {
   role: "user" | "assistant";
   content: string;
