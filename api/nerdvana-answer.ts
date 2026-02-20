@@ -99,6 +99,10 @@ async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
 
+  async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+
   try {
     const response = await fetch(
       "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent",
@@ -124,12 +128,17 @@ async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
       }
     );
 
+    // ⭐ IMPORTANT DEBUG PART
+    const rawText = await response.text();
+
+    console.log("Gemini status:", response.status);
+    console.log("Gemini raw response:", rawText);
+
     if (!response.ok) {
-      const details = await response.text();
-      throw new Error(`Gemini failed: ${response.status} ${details}`);
+      throw new Error(`Gemini failed → ${response.status} → ${rawText}`);
     }
 
-    const data = await response.json();
+    const data = JSON.parse(rawText);
 
     return (
       data?.candidates?.[0]?.content?.parts?.[0]?.text ||
@@ -139,10 +148,13 @@ async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
     if (error instanceof DOMException && error.name === "AbortError") {
       throw new Error("Gemini request timed out");
     }
+
+    console.error("GENERATION ERROR FULL:", error);
     throw error;
   } finally {
     clearTimeout(timeout);
   }
+}
 }
 
 function buildFollowups(query: string): string[] {
