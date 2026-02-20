@@ -92,70 +92,79 @@ IMPORTANT GUIDELINES:
   return `${systemRole}\nSPOILER POLICY:\n${spoilerRule}${conversationContext}\n\nQUERY: ${query}\n\nANSWER:`;
 }
 
-async function generateAnswer(
-  prompt: string,
-  apiKey: string,
-  model: string
-): Promise<string> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
+async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
+  const models = [
+    "gemini-2.5-flash",
+    "gemini-flash-latest",
+    "gemini-pro-latest"
+  ];
 
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/${encodeURIComponent(model)}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: prompt }]
+  let lastError: any = null;
+
+  for (const model of models) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+
+    try {
+      console.log("[Nerdvana] Trying model:", model);
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: prompt }]
+              }
+            ],
+            generationConfig: {
+              maxOutputTokens: 1000,
+              temperature: 0.7
             }
-          ],
-          generationConfig: {
-            maxOutputTokens: 1000,
-            temperature: 0.7
-          }
-        }),
-        signal: controller.signal
+          }),
+          signal: controller.signal
+        }
+      );
+
+      const rawText = await response.text();
+
+      console.log(`[Nerdvana] ${model} status:`, response.status);
+
+      if (!response.ok) {
+        lastError = rawText;
+        console.warn(`[Nerdvana] ${model} failed → fallback`);
+        continue;
       }
-    );
 
-    const rawText = await response.text();
+      const data = JSON.parse(rawText);
 
-    console.log("Gemini status:", response.status);
-    console.log("Gemini raw response:", rawText);
+      const text =
+        data?.candidates?.[0]?.content?.parts
+          ?.map((p: any) => p?.text || "")
+          .join("") || "";
 
-    if (!response.ok) {
-      throw new Error(`Gemini failed -> ${response.status} -> ${rawText}`);
+      if (!text) {
+        lastError = "Empty response";
+        continue;
+      }
+
+      console.log("[Nerdvana] Success using:", model);
+      return text;
+    } catch (err) {
+      lastError = err;
+      console.warn(`[Nerdvana] ${model} crashed → fallback`);
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const data = JSON.parse(rawText);
-
-    const text =
-      data?.candidates?.[0]?.content?.parts
-        ?.map((p: any) => p?.text || "")
-        .join("") || "";
-
-    if (!text) {
-      throw new Error("Gemini response contained no text");
-    }
-
-    return text;
-  } catch (error: unknown) {
-    if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error("Gemini request timed out");
-    }
-
-    console.error("GENERATION ERROR FULL:", error);
-    throw error;
-  } finally {
-    clearTimeout(timeout);
   }
+
+  throw new Error(`All models failed → ${String(lastError)}`);
 }
 
 function buildFollowups(query: string): string[] {
@@ -204,10 +213,8 @@ export default async function handler(req: any, res?: any) {
       );
     }
 
-    const model = String(env.GEMINI_MODEL ?? "").trim() || "gemini-2.0-flash";
-
     const prompt = buildPrompt(query, conversation, spoilerMode);
-    const answer = await generateAnswer(prompt, apiKey, model);
+    const answer = await generateAnswer(prompt, apiKey);
     const followups = buildFollowups(query);
 
     return jsonResponse(
