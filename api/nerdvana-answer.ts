@@ -1,6 +1,3 @@
-import fs from "node:fs";
-import path from "node:path";
-
 type ConversationMessage = {
   role: "user" | "assistant";
   content: string;
@@ -14,53 +11,10 @@ type SourceItem = {
 
 let cachedWorkingModel: string | null = null;
 
-function readEnvValueFromFile(filePath: string, key: string): string | undefined {
-  try {
-    if (!fs.existsSync(filePath)) return undefined;
-    const content = fs.readFileSync(filePath, "utf8");
-    const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`^\\s*${escapedKey}\\s*=\\s*(.*)\\s*$`, "m");
-    const match = content.match(regex);
-    if (!match) return undefined;
-
-    let value = match[1].trim();
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-    return value || undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function resolveApiKey(): string | undefined {
-  const fromProcess = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
-  if (fromProcess) return fromProcess;
-
-  const base = process.cwd();
-  const candidateFiles = [
-    path.resolve(base, ".env.local"),
-    path.resolve(base, ".env"),
-    path.resolve(base, "../.env.local"),
-    path.resolve(base, "../.env")
-  ];
-
-  for (const file of candidateFiles) {
-    const direct = readEnvValueFromFile(file, "GEMINI_API_KEY");
-    if (direct) return direct;
-    const vitePrefixed = readEnvValueFromFile(file, "VITE_GEMINI_API_KEY");
-    if (vitePrefixed) return vitePrefixed;
-  }
-
-  return undefined;
-}
-
 async function postJson(url: string, body: unknown, timeoutMs = 20000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
     const response = await fetch(url, {
       method: "POST",
@@ -77,6 +31,7 @@ async function postJson(url: string, body: unknown, timeoutMs = 20000) {
 async function getJson(url: string, timeoutMs = 5000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
     const response = await fetch(url, { signal: controller.signal });
     return response;
@@ -88,24 +43,6 @@ async function getJson(url: string, timeoutMs = 5000) {
 async function findWorkingModel(apiKey: string): Promise<string> {
   if (cachedWorkingModel) return cachedWorkingModel;
 
-  const availableModels: string[] = [];
-  try {
-    const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
-    const listResp = await getJson(listUrl, 3000);
-    if (listResp.ok) {
-      const listData = await listResp.json();
-      if (Array.isArray(listData?.models)) {
-        for (const model of listData.models) {
-          const rawName = String(model?.name ?? "");
-          const normalized = rawName.replace("models/", "");
-          if (normalized.includes("gemini")) availableModels.push(normalized);
-        }
-      }
-    }
-  } catch {
-    // Ignore listing failures and fall back to hardcoded candidates.
-  }
-
   const candidates = [
     "gemini-2.0-flash-exp",
     "gemini-2.0-flash",
@@ -113,66 +50,36 @@ async function findWorkingModel(apiKey: string): Promise<string> {
     "gemini-1.5-flash-latest",
     "gemini-1.5-pro",
     "gemini-1.5-pro-latest",
-    "gemini-1.0-pro",
-    "gemini-pro",
-    ...availableModels
+    "gemini-pro"
   ];
-  const uniqueCandidates = [...new Set(candidates)];
 
-  for (const modelName of uniqueCandidates) {
-    const testUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+  for (const modelName of candidates) {
     try {
+      const testUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
       const testResp = await postJson(
         testUrl,
         { contents: [{ parts: [{ text: "Hello" }] }] },
-        8000
+        6000
       );
+
       if (testResp.ok) {
         cachedWorkingModel = modelName;
         return modelName;
       }
-    } catch {
-      // Continue to next candidate.
-    }
+    } catch {}
   }
 
   return "gemini-1.5-flash";
 }
 
-async function fetchWhoogleSources(query: string): Promise<SourceItem[]> {
-  const baseUrl = process.env.VITE_WHOOGLE_URL;
-  if (!baseUrl) return [];
-
-  const searchUrl = `${baseUrl.replace(/\/+$/, "")}/search?q=${encodeURIComponent(query)}&format=json`;
-
-  try {
-    const response = await getJson(searchUrl, 5000);
-    if (!response.ok) return [];
-
-    const payload = await response.json();
-    const rows = Array.isArray(payload)
-      ? payload
-      : Array.isArray(payload?.results)
-        ? payload.results
-        : [];
-
-    return rows.slice(0, 3).map((result: any) => ({
-      title: result?.title || "Untitled",
-      snippet: result?.snippet || result?.content || result?.description || "",
-      url: result?.url || result?.link || ""
-    }));
-  } catch {
-    return [];
-  }
-}
-
 function buildPrompt(
   query: string,
   conversation: ConversationMessage[],
-  spoilerMode: boolean,
-  sources: SourceItem[]
+  spoilerMode: boolean
 ) {
   let activeTopic = query;
+
   if (conversation.length > 0) {
     const firstUserMsg = conversation.find((msg) => msg.role === "user");
     if (firstUserMsg) activeTopic = firstUserMsg.content;
@@ -183,18 +90,14 @@ function buildPrompt(
 ACTIVE DISCUSSION TOPIC: ${activeTopic}
 
 IMPORTANT GUIDELINES:
-- You MUST assume all follow-up questions refer to the ACTIVE DISCUSSION TOPIC unless the user clearly names a different show, movie, or universe.
-- If a follow-up question is short or ambiguous (e.g., 'how many seasons are there?'), interpret it in relation to the ACTIVE DISCUSSION TOPIC.
-- Provide concise but informative answers (2-3 paragraphs preferred).
-- Avoid single-sentence replies unless explicitly asked for a quick answer.
-- Prioritize canon facts, but acknowledge popular theories.
-- Cite sources where possible.
-- If spoiler mode is OFF and the user asks about deaths, endings, or major plot twists, REFUSE to answer details and instead provide a spoiler warning.
+- Assume follow-ups refer to ACTIVE DISCUSSION TOPIC unless user switches.
+- Provide concise but informative answers (2-3 paragraphs).
+- Prioritize canon facts but mention theories when relevant.
 `;
 
   const spoilerRule = spoilerMode
-    ? "Spoilers are allowed. You may include major plot outcomes if relevant."
-    : "Spoilers are NOT allowed. Avoid revealing deaths, endings, or final outcomes. If user explicitly asks for spoilers, provide a WARNING instead of direct spoilers.";
+    ? "Spoilers are allowed."
+    : "Spoilers are NOT allowed. Give warning instead of major plot reveals.";
 
   const conversationContext =
     conversation.length > 0
@@ -204,16 +107,12 @@ IMPORTANT GUIDELINES:
           .join("\n")
       : "";
 
-  const sourcesContext =
-    sources.length > 0
-      ? "\n\nSOURCES:\n" + sources.map((s, i) => `${i + 1}. ${s.title}: ${s.snippet}`).join("\n")
-      : "";
-
-  return `${systemRole}\nSPOILER POLICY:\n${spoilerRule}${conversationContext}${sourcesContext}\n\nQUERY: ${query}\n\nANSWER:`;
+  return `${systemRole}\nSPOILER POLICY:\n${spoilerRule}${conversationContext}\n\nQUERY: ${query}\n\nANSWER:`;
 }
 
 async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
   const modelName = await findWorkingModel(apiKey);
+
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
   const response = await postJson(
@@ -229,9 +128,7 @@ async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
   );
 
   if (!response.ok) {
-    if (cachedWorkingModel === modelName) {
-      cachedWorkingModel = null;
-    }
+    cachedWorkingModel = null;
     const details = await response.text();
     throw new Error(`Gemini generation failed: ${response.status} ${details}`);
   }
@@ -255,6 +152,7 @@ export default async function handler(request: Request): Promise<Response> {
 
   try {
     const body = await request.json();
+
     const query = String(body?.query ?? "").trim();
     const conversation = Array.isArray(body?.conversation) ? body.conversation : [];
     const spoilerMode =
@@ -266,20 +164,24 @@ export default async function handler(request: Request): Promise<Response> {
       return Response.json({ error: "Query is required" }, { status: 400 });
     }
 
-    const apiKey = resolveApiKey();
+    const apiKey = process.env.GEMINI_API_KEY;
+
     if (!apiKey) {
       return Response.json(
-        { error: "Missing GEMINI_API_KEY (or VITE_GEMINI_API_KEY for local dev)" },
+        { error: "Missing GEMINI_API_KEY in Vercel env variables" },
         { status: 500 }
       );
     }
 
-    const sources = await fetchWhoogleSources(query);
-    const prompt = buildPrompt(query, conversation, spoilerMode, sources);
+    const prompt = buildPrompt(query, conversation, spoilerMode);
     const answer = await generateAnswer(prompt, apiKey);
     const followups = buildFollowups(query);
 
-    return Response.json({ answer, sources, followups });
+    return Response.json({
+      answer,
+      sources: [], // non-blocking, no Whoogle freeze
+      followups
+    });
   } catch (error: any) {
     return Response.json(
       {
