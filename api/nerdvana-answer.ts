@@ -92,7 +92,6 @@ IMPORTANT GUIDELINES:
   return `${systemRole}\nSPOILER POLICY:\n${spoilerRule}${conversationContext}\n\nQUERY: ${query}\n\nANSWER:`;
 }
 
-/* ✅ FIXED — ONLY ONE generateAnswer FUNCTION */
 async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
@@ -200,7 +199,6 @@ export default async function handler(req: any, res?: any) {
 
     return jsonResponse(
       {
-er{
         answer,
         sources: [],
         followups
