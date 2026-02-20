@@ -92,13 +92,17 @@ IMPORTANT GUIDELINES:
   return `${systemRole}\nSPOILER POLICY:\n${spoilerRule}${conversationContext}\n\nQUERY: ${query}\n\nANSWER:`;
 }
 
-async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
+async function generateAnswer(
+  prompt: string,
+  apiKey: string,
+  model: string
+): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
 
   try {
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent",
+      `https://generativelanguage.googleapis.com/v1/models/${encodeURIComponent(model)}:generateContent`,
       {
         method: "POST",
         headers: {
@@ -127,7 +131,7 @@ async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
     console.log("Gemini raw response:", rawText);
 
     if (!response.ok) {
-      throw new Error(`Gemini failed → ${response.status} → ${rawText}`);
+      throw new Error(`Gemini failed -> ${response.status} -> ${rawText}`);
     }
 
     const data = JSON.parse(rawText);
@@ -183,7 +187,14 @@ export default async function handler(req: any, res?: any) {
       return jsonResponse({ error: "Query is required" }, 400, res);
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const env =
+      (
+        globalThis as {
+          process?: { env?: Record<string, string | undefined> };
+        }
+      ).process?.env ?? {};
+
+    const apiKey = env.GEMINI_API_KEY;
 
     if (!apiKey) {
       return jsonResponse(
@@ -193,8 +204,10 @@ export default async function handler(req: any, res?: any) {
       );
     }
 
+    const model = String(env.GEMINI_MODEL ?? "").trim() || "gemini-2.0-flash";
+
     const prompt = buildPrompt(query, conversation, spoilerMode);
-    const answer = await generateAnswer(prompt, apiKey);
+    const answer = await generateAnswer(prompt, apiKey, model);
     const followups = buildFollowups(query);
 
     return jsonResponse(
