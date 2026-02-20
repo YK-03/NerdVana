@@ -1,76 +1,26 @@
+export const runtime = "edge";
+
 type ConversationMessage = {
   role: "user" | "assistant";
   content: string;
 };
 
-type SourceItem = {
-  title: string;
-  snippet: string;
-  url: string;
-};
-
-let cachedWorkingModel: string | null = null;
-
-async function postJson(url: string, body: unknown, timeoutMs = 20000) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      signal: controller.signal
-    });
-    return response;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function getJson(url: string, timeoutMs = 5000) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    return response;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function findWorkingModel(apiKey: string): Promise<string> {
-  if (cachedWorkingModel) return cachedWorkingModel;
-
-  const candidates = [
-    "gemini-2.0-flash-exp",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-latest",
-    "gemini-1.5-pro",
-    "gemini-1.5-pro-latest",
-    "gemini-pro"
-  ];
-
-  for (const modelName of candidates) {
-    try {
-      const testUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-
-      const testResp = await postJson(
-        testUrl,
-        { contents: [{ parts: [{ text: "Hello" }] }] },
-        6000
-      );
-
-      if (testResp.ok) {
-        cachedWorkingModel = modelName;
-        return modelName;
-      }
-    } catch {}
+function normalizeConversation(input: unknown): ConversationMessage[] {
+  if (!Array.isArray(input)) {
+    return [];
   }
 
-  return "gemini-1.5-flash";
+  return input
+    .filter(
+      (item): item is { role: unknown; content: unknown } =>
+        Boolean(item) && typeof item === "object"
+    )
+    .map((item) => {
+      const role = item.role === "assistant" ? "assistant" : "user";
+      const content = String(item.content ?? "").trim();
+      return { role, content };
+    })
+    .filter((item) => item.content.length > 0);
 }
 
 function buildPrompt(
@@ -81,8 +31,10 @@ function buildPrompt(
   let activeTopic = query;
 
   if (conversation.length > 0) {
-    const firstUserMsg = conversation.find((msg) => msg.role === "user");
-    if (firstUserMsg) activeTopic = firstUserMsg.content;
+    const lastUserMsg = [...conversation]
+      .reverse()
+      .find((msg) => msg.role === "user");
+    if (lastUserMsg) activeTopic = lastUserMsg.content;
   }
 
   const systemRole = `You are Nerdvana, a nerd-focused AI assistant specializing in pop culture.
@@ -111,36 +63,59 @@ IMPORTANT GUIDELINES:
 }
 
 async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
-  const modelName = await findWorkingModel(apiKey);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-
-  const response = await postJson(
-    url,
-    {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        maxOutputTokens: 1000,
-        temperature: 0.7
+  try {
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: prompt }]
+            }
+          ],
+          generationConfig: {
+            maxOutputTokens: 1000,
+            temperature: 0.7
+          }
+        }),
+        signal: controller.signal
       }
-    },
-    20000
-  );
+    );
 
-  if (!response.ok) {
-    cachedWorkingModel = null;
-    const details = await response.text();
-    throw new Error(`Gemini generation failed: ${response.status} ${details}`);
+    if (!response.ok) {
+      const details = await response.text();
+      throw new Error(`Gemini failed: ${response.status} ${details}`);
+    }
+
+    const data = await response.json();
+
+    return (
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "No response generated."
+    );
+  } catch (error: unknown) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Gemini request timed out");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const data = await response.json();
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "No response generated.";
 }
 
 function buildFollowups(query: string): string[] {
   return [
     `Can you explain the key events behind "${query}"?`,
-    `What are the strongest fan theories related to this?`,
+    "What are the strongest fan theories related to this?",
     "Which sources are most reliable for canon details?"
   ];
 }
@@ -154,7 +129,7 @@ export default async function handler(request: Request): Promise<Response> {
     const body = await request.json();
 
     const query = String(body?.query ?? "").trim();
-    const conversation = Array.isArray(body?.conversation) ? body.conversation : [];
+    const conversation = normalizeConversation(body?.conversation);
     const spoilerMode =
       typeof body?.spoilerMode === "boolean"
         ? body.spoilerMode
@@ -179,14 +154,15 @@ export default async function handler(request: Request): Promise<Response> {
 
     return Response.json({
       answer,
-      sources: [], // non-blocking, no Whoogle freeze
+      sources: [],
       followups
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    console.error("Generation Failed", error);
     return Response.json(
       {
         error: "Generation Failed",
-        details: String(error?.message ?? "Unknown error")
+        details: "Unable to generate an answer right now. Please try again."
       },
       { status: 500 }
     );
