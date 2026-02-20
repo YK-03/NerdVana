@@ -3,12 +3,8 @@ type ConversationMessage = {
   content: string;
 };
 
-function jsonResponse(
-  payload: unknown,
-  status: number,
-  res?: any
-): Response | unknown {
-  if (res && typeof res.status === "function" && typeof res.json === "function") {
+function jsonResponse(payload: unknown, status: number, res?: any) {
+  if (res && typeof res.status === "function") {
     return res.status(status).json(payload);
   }
 
@@ -39,9 +35,7 @@ async function readBody(req: any): Promise<any> {
 }
 
 function normalizeConversation(input: unknown): ConversationMessage[] {
-  if (!Array.isArray(input)) {
-    return [];
-  }
+  if (!Array.isArray(input)) return [];
 
   return input
     .filter(
@@ -49,7 +43,9 @@ function normalizeConversation(input: unknown): ConversationMessage[] {
         Boolean(item) && typeof item === "object"
     )
     .map((item) => {
-      const role = item.role === "assistant" ? "assistant" : "user";
+      const role: "user" | "assistant" =
+        item.role === "assistant" ? "assistant" : "user";
+
       const content = String(item.content ?? "").trim();
       return { role, content };
     })
@@ -67,6 +63,7 @@ function buildPrompt(
     const lastUserMsg = [...conversation]
       .reverse()
       .find((msg) => msg.role === "user");
+
     if (lastUserMsg) activeTopic = lastUserMsg.content;
   }
 
@@ -95,17 +92,14 @@ IMPORTANT GUIDELINES:
   return `${systemRole}\nSPOILER POLICY:\n${spoilerRule}${conversationContext}\n\nQUERY: ${query}\n\nANSWER:`;
 }
 
+/* ✅ FIXED — ONLY ONE generateAnswer FUNCTION */
 async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
-
-  async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
 
   try {
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent",
       {
         method: "POST",
         headers: {
@@ -128,7 +122,6 @@ async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
       }
     );
 
-    // ⭐ IMPORTANT DEBUG PART
     const rawText = await response.text();
 
     console.log("Gemini status:", response.status);
@@ -140,10 +133,16 @@ async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
 
     const data = JSON.parse(rawText);
 
-    return (
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No response generated."
-    );
+    const text =
+      data?.candidates?.[0]?.content?.parts
+        ?.map((p: any) => p?.text || "")
+        .join("") || "";
+
+    if (!text) {
+      throw new Error("Gemini response contained no text");
+    }
+
+    return text;
   } catch (error: unknown) {
     if (error instanceof DOMException && error.name === "AbortError") {
       throw new Error("Gemini request timed out");
@@ -155,7 +154,6 @@ async function generateAnswer(prompt: string, apiKey: string): Promise<string> {
     clearTimeout(timeout);
   }
 }
-}
 
 function buildFollowups(query: string): string[] {
   return [
@@ -165,7 +163,7 @@ function buildFollowups(query: string): string[] {
   ];
 }
 
-export default async function handler(req: any, res?: any): Promise<Response | unknown> {
+export default async function handler(req: any, res?: any) {
   const method = String(req?.method ?? "POST").toUpperCase();
 
   if (method !== "POST") {
@@ -200,13 +198,19 @@ export default async function handler(req: any, res?: any): Promise<Response | u
     const answer = await generateAnswer(prompt, apiKey);
     const followups = buildFollowups(query);
 
-    return jsonResponse({
-      answer,
-      sources: [],
-      followups
-    }, 200, res);
-  } catch (error: unknown) {
+    return jsonResponse(
+      {
+er{
+        answer,
+        sources: [],
+        followups
+      },
+      200,
+      res
+    );
+  } catch (error) {
     console.error("Generation Failed", error);
+
     return jsonResponse(
       {
         error: "Generation Failed",
