@@ -30,30 +30,30 @@ export default function MarketingPage({
           <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_50%,rgba(255,0,0,0.12),transparent_60%)]" />
         </div>
 
-        <div className="relative z-10 w-full max-w-xl pl-16 pr-6 animate-[fade-up_700ms_ease-out_forwards] opacity-0 translate-y-5">
+        <div className="relative z-10 w-full max-w-3xl pl-4 sm:pl-8 lg:pl-16 pr-4 sm:pr-6 animate-[fade-up_700ms_ease-out_forwards] opacity-0 translate-y-5">
           <h1
-            className="text-7xl md:text-8xl font-black tracking-tight uppercase text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]"
+            className="text-[clamp(2.5rem,16vw,6rem)] font-black tracking-tight uppercase text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]"
             style={{ fontFamily: 'Impact, "Arial Black", sans-serif' }}
           >
             NERDVANA
           </h1>
 
-          <p className="mt-6 uppercase tracking-[0.3em] text-white/80 text-lg md:text-xl">
+          <p className="mt-4 sm:mt-6 uppercase tracking-[0.18em] sm:tracking-[0.24em] md:tracking-[0.3em] text-white/80 text-[0.86rem] sm:text-base md:text-xl">
             THE STORY ENDED. THE QUESTIONS DIDN'T.
           </p>
 
-          <div className="mt-10 flex flex-wrap gap-4">
+          <div className="mt-7 sm:mt-10 flex flex-wrap gap-3 sm:gap-4">
             <button
               type="button"
               onClick={onStartInsights}
-              className="nerdvana-clickable bg-red-600 text-white uppercase font-semibold px-6 py-3 tracking-[0.14em] shadow-[6px_6px_0_black] transition-all duration-200 ease-out hover:translate-x-1 hover:translate-y-1 hover:shadow-[3px_3px_0_black]"
+              className="nerdvana-clickable bg-red-600 text-white uppercase font-semibold px-5 sm:px-6 py-3 tracking-[0.14em] shadow-[6px_6px_0_black] transition-all duration-200 ease-out hover:translate-x-1 hover:translate-y-1 hover:shadow-[3px_3px_0_black] min-h-11"
             >
               LET'S DECODE!
             </button>
             <button
               type="button"
               onClick={onSignIn}
-              className="nerdvana-clickable border border-white/60 bg-transparent text-white px-6 py-3 uppercase tracking-[0.14em] transition-colors duration-150 hover:bg-white/10"
+              className="nerdvana-clickable border border-white/60 bg-transparent text-white px-5 sm:px-6 py-3 uppercase tracking-[0.14em] transition-colors duration-150 hover:bg-white/10 min-h-11"
             >
               SIGN IN
             </button>

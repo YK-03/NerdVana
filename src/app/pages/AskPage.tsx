@@ -607,7 +607,7 @@ export default function AskPage({
 
   return (
     <div
-      className="min-h-screen w-full transition-colors duration-300"
+      className="min-h-screen w-full overflow-x-hidden transition-colors duration-300"
       style={{ backgroundColor: "var(--nerdvana-conversation-bg)" }}
     >
       <div className="fixed inset-0 pointer-events-none paper-texture nerdvana-paper-texture-conversation" />
@@ -618,8 +618,8 @@ export default function AskPage({
           }}
         />
 
-        <main className="px-6 md:px-12 py-8 md:py-12">
-          <article className="max-w-4xl mx-auto">
+        <main className="px-4 sm:px-6 lg:px-10 xl:px-12 py-6 sm:py-8 md:py-12">
+          <article className="max-w-5xl mx-auto">
             <form method="get" action="/ask" className="mb-4">
               <div
                 className="border-[2px] p-[2px]"
@@ -632,7 +632,7 @@ export default function AskPage({
                   name="q"
                   defaultValue={fullQuestion}
                   placeholder="Ask Nerdvana anything..."
-                  className="askQueryInput w-full px-4 py-3 text-[1rem] md:text-[1.08rem] focus:outline-none"
+                  className="askQueryInput w-full px-3 sm:px-4 py-3 text-[0.98rem] sm:text-[1rem] md:text-[1.08rem] focus:outline-none"
                   style={{
                     fontFamily: '"Times New Roman", serif',
                     backgroundColor: "var(--nerdvana-surface)",
@@ -643,14 +643,14 @@ export default function AskPage({
               </div>
             </form>
 
-            <div className="mb-4 flex justify-end gap-6 items-center">
+            <div className="mb-4 flex flex-wrap justify-start sm:justify-end gap-3 sm:gap-6 items-center">
               {[
                 { label: "Results Spoilers", checked: resultsSpoilers, set: setResultsSpoilers },
                 { label: "Conversation Spoilers", checked: chatSpoilers, set: setChatSpoilers }
               ].map((sw, idx) => (
                 <label key={idx} className="nerdvana-clickable flex items-center gap-2 group select-none">
                   <span
-                    className="text-[0.6rem] uppercase tracking-[0.1em]"
+                    className="text-[0.58rem] sm:text-[0.6rem] uppercase tracking-[0.1em]"
                     style={{
                       fontFamily: '"Courier New", monospace',
                       color: sw.checked ? "var(--nerdvana-accent)" : "var(--nerdvana-text)",
@@ -661,7 +661,7 @@ export default function AskPage({
                     {sw.label}
                   </span>
                   <div
-                    className="relative w-8 h-4 rounded-full transition-colors duration-200"
+                    className="relative w-9 h-5 rounded-full transition-colors duration-200"
                     style={{
                       backgroundColor: sw.checked ? "var(--nerdvana-accent)" : "rgba(120,120,120,0.3)",
                       border: "1px solid var(--nerdvana-border)"
@@ -674,7 +674,7 @@ export default function AskPage({
                       onChange={(e) => sw.set(e.target.checked)}
                     />
                     <div
-                      className={`absolute top-0.5 left-0.5 w-2.5 h-2.5 bg-white rounded-full shadow-sm transform transition-transform duration-200 ${sw.checked ? "translate-x-4" : "translate-x-0"
+                      className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform duration-200 ${sw.checked ? "translate-x-4" : "translate-x-0"
                         }`}
                     />
                   </div>
@@ -683,10 +683,10 @@ export default function AskPage({
             </div>
 
             {fullQuestion && (
-              <div className="mb-6 flex justify-end">
+              <div className="mb-6 flex justify-start sm:justify-end">
                 <button
                   onClick={handleSaveLorebook}
-                  className="group relative px-4 py-2 border-[2px] transition-all duration-300 hover:-translate-y-0.5"
+                  className="group relative px-4 py-2.5 border-[2px] transition-all duration-300 hover:-translate-y-0.5"
                   style={{
                     borderColor: "var(--nerdvana-border)",
                     backgroundColor: "var(--nerdvana-surface)",
@@ -694,7 +694,7 @@ export default function AskPage({
                   }}
                 >
                   <span
-                    className="flex items-center gap-2 text-[0.75rem] uppercase tracking-[0.15em]"
+                    className="flex items-center gap-2 text-[0.7rem] sm:text-[0.75rem] uppercase tracking-[0.15em]"
                     style={{ fontFamily: '"Courier New", monospace' }}
                   >
                     <span>Save</span>
@@ -741,7 +741,7 @@ export default function AskPage({
                       onChange={(e) => setFollowUpQuery(e.target.value)}
                       placeholder="Ask a follow-up about this topic..."
                       disabled={isGeneratingFollowUp}
-                      className="followUpInput w-full px-4 py-3 text-[1rem] md:text-[1.08rem] focus:outline-none"
+                      className="followUpInput w-full px-3 sm:px-4 py-3 text-[0.98rem] sm:text-[1rem] md:text-[1.08rem] focus:outline-none"
                       spellCheck={false}
                       autoComplete="off"
                       style={{
@@ -767,7 +767,7 @@ export default function AskPage({
             {conversation.length > 0 && (
               <div className="mt-6 border-t pt-6" style={{ borderColor: "var(--nerdvana-border)" }}>
                 <h3
-                  className="mb-4 text-[0.68rem] md:text-[0.72rem] uppercase tracking-[3px]"
+                  className="mb-4 text-[0.66rem] md:text-[0.72rem] uppercase tracking-[0.18em] sm:tracking-[3px]"
                   style={{
                     fontFamily: '"Special Elite", monospace',
                     color: "var(--nerdvana-text)",

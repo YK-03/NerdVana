@@ -14,6 +14,7 @@ interface HeaderProps {
 function Header({ onNavigate }: HeaderProps) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [open, setOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [username, setUsername] = useState<string>("Explorer");
   const { user, login, logout } = useAuth();
   const navItems = ["Explore", "Debates", "Community", "About"];
@@ -69,7 +70,7 @@ function Header({ onNavigate }: HeaderProps) {
   }, [user]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open && !mobileNavOpen) return;
 
     const onDocumentClick = (event: MouseEvent) => {
       const target = event.target as Node | null;
@@ -77,11 +78,15 @@ function Header({ onNavigate }: HeaderProps) {
       if (userMenuRef.current && !userMenuRef.current.contains(target)) {
         setOpen(false);
       }
+      const inMobileNav = (target as HTMLElement).closest?.("[data-mobile-nav]");
+      if (!inMobileNav) {
+        setMobileNavOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", onDocumentClick);
     return () => document.removeEventListener("mousedown", onDocumentClick);
-  }, [open]);
+  }, [mobileNavOpen, open]);
 
   const handleLogout = () => {
     setOpen(false);
@@ -90,6 +95,7 @@ function Header({ onNavigate }: HeaderProps) {
 
   const navigateToPath = (path: string) => {
     setOpen(false);
+    setMobileNavOpen(false);
     window.history.pushState({}, "", path);
     window.dispatchEvent(new PopStateEvent("popstate"));
   };
@@ -116,13 +122,13 @@ function Header({ onNavigate }: HeaderProps) {
       <div className="absolute inset-0 pointer-events-none paper-texture opacity-70" />
       <div className="absolute inset-0 pointer-events-none header-vignette" />
 
-      <div className="relative max-w-7xl mx-auto px-6 md:px-8 pt-7 pb-5 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 md:gap-4">
+      <div className="relative mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-10 xl:px-12 pt-5 sm:pt-6 pb-4 sm:pb-5 flex items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <motion.button
             onClick={() => onNavigate?.("home")}
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.98 }}
-            className="text-2xl md:text-[2rem] tracking-[-0.04em] uppercase transition-all duration-300 leading-none"
+            className="text-[clamp(1.4rem,6.3vw,2rem)] tracking-[-0.04em] uppercase transition-all duration-300 leading-none min-h-10"
             style={{
               fontFamily: 'Impact, "Arial Black", sans-serif',
               color: "var(--nerdvana-text)"
@@ -146,7 +152,7 @@ function Header({ onNavigate }: HeaderProps) {
         </div>
 
         <nav
-          className="hidden md:flex items-center gap-2 p-1 border-[2px] transition-colors duration-300"
+          className="hidden lg:flex items-center gap-2 p-1 border-[2px] transition-colors duration-300"
           style={{
             borderColor: "var(--nerdvana-border)",
             backgroundColor: "var(--nerdvana-surface)"
@@ -177,10 +183,25 @@ function Header({ onNavigate }: HeaderProps) {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen((prev) => !prev)}
+            className="lg:hidden text-[0.68rem] uppercase tracking-[0.14em] transition-all duration-300 px-3 py-2 border-[2px] min-h-10"
+            style={{
+              fontFamily: '"Courier New", monospace',
+              color: "var(--nerdvana-text)",
+              borderColor: "var(--nerdvana-border)",
+              backgroundColor: "var(--nerdvana-surface)"
+            }}
+            aria-label="Toggle navigation menu"
+            aria-expanded={mobileNavOpen}
+          >
+            Menu
+          </button>
           <button
             onClick={toggleTheme}
-            className="text-[0.7rem] uppercase tracking-[0.15em] transition-all duration-300 px-3 py-1.5 border-[2px] hover:-translate-y-0.5"
+            className="text-[0.66rem] sm:text-[0.7rem] uppercase tracking-[0.15em] transition-all duration-300 px-3 py-2 border-[2px] hover:-translate-y-0.5 min-h-10"
             style={{
               fontFamily: '"Courier New", monospace',
               color: "var(--nerdvana-text)",
@@ -210,7 +231,7 @@ function Header({ onNavigate }: HeaderProps) {
                     event.stopPropagation();
                     setOpen((prev) => !prev);
                   }}
-                  className="nerdvana-clickable flex items-center gap-2 px-2 py-1 border-[2px] transition-all duration-200 hover:-translate-y-0.5"
+                  className="nerdvana-clickable flex items-center gap-2 px-2.5 py-2 border-[2px] transition-all duration-200 hover:-translate-y-0.5 min-h-10 max-w-[44vw] sm:max-w-none"
                   style={{
                     borderColor: "var(--nerdvana-border)",
                     backgroundColor: "var(--nerdvana-surface)",
@@ -218,7 +239,7 @@ function Header({ onNavigate }: HeaderProps) {
                     fontFamily: '"Courier New", monospace'
                   }}
                 >
-                  <span className="text-[0.72rem] uppercase tracking-[0.08em]">
+                  <span className="text-[0.66rem] sm:text-[0.72rem] uppercase tracking-[0.08em] truncate">
                     {`Hi, ${username} !`}
                   </span>
                 </button>
@@ -230,11 +251,12 @@ function Header({ onNavigate }: HeaderProps) {
               onClick={() => {
                 login()
                   .then(() => {
+                    setMobileNavOpen(false);
                     onNavigate?.("home");
                   })
                   .catch(() => undefined);
               }}
-              className="text-[0.7rem] uppercase tracking-[0.15em] transition-all duration-300 px-4 py-1.5 border-[2px] auth-button"
+              className="text-[0.66rem] sm:text-[0.7rem] uppercase tracking-[0.15em] transition-all duration-300 px-3 sm:px-4 py-2 border-[2px] auth-button min-h-10"
               style={{
                 fontFamily: '"Courier New", monospace',
                 color: "var(--nerdvana-surface)",
@@ -246,6 +268,33 @@ function Header({ onNavigate }: HeaderProps) {
           )}
         </div>
       </div>
+      {mobileNavOpen && (
+        <div
+          data-mobile-nav
+          className="relative z-50 mx-4 mb-4 mt-1 lg:hidden border-[2px] p-2 flex flex-col gap-1"
+          style={{
+            borderColor: "var(--nerdvana-border)",
+            backgroundColor: "var(--nerdvana-surface)"
+          }}
+        >
+          {navItems.map((item) => (
+            <button
+              key={`mobile-${item}`}
+              onClick={() => {
+                setMobileNavOpen(false);
+                onNavigate?.(item.toLowerCase());
+              }}
+              className="w-full text-left px-3 py-2 text-[0.72rem] uppercase tracking-[0.14em] border-[1px] border-transparent hover:border-[var(--nerdvana-border)]"
+              style={{
+                fontFamily: '"Courier New", monospace',
+                color: "var(--nerdvana-text)"
+              }}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      )}
 
       <style>{`
         .paper-texture {

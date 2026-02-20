@@ -36,7 +36,7 @@ function HistoryPanel({ uid, onSelectQuery }: HistoryPanelProps) {
 
   return (
     <motion.div
-      className="absolute right-0 top-full mt-2 z-50 w-[320px] border-[2px] p-2"
+      className="absolute right-0 top-full mt-2 z-50 w-[min(90vw,20rem)] border-[2px] p-2"
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.15 }}

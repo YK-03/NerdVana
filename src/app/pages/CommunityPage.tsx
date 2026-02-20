@@ -14,10 +14,10 @@ export default function CommunityPage({ onNavigatePage }: CommunityPageProps) {
       <div className="relative">
         <Header onNavigate={onNavigatePage} />
 
-        <main className="px-6 md:px-12 py-8 md:py-12">
-          <article className="max-w-4xl mx-auto">
+        <main className="px-4 sm:px-6 lg:px-10 xl:px-12 py-6 sm:py-8 md:py-12">
+          <article className="max-w-5xl mx-auto">
             <h1
-              className="text-3xl md:text-5xl font-black tracking-[-0.03em] leading-tight uppercase"
+              className="text-[clamp(2rem,8.6vw,3.2rem)] font-black tracking-[-0.03em] leading-tight uppercase"
               style={{
                 fontFamily: 'Impact, "Arial Black", sans-serif',
                 color: "var(--nerdvana-text)"
@@ -27,7 +27,7 @@ export default function CommunityPage({ onNavigatePage }: CommunityPageProps) {
             </h1>
 
             <section
-              className="mt-8 border-[2px] p-5 md:p-7 transition-colors duration-300"
+              className="mt-6 sm:mt-8 border-[2px] p-4 sm:p-5 md:p-7 transition-colors duration-300"
               style={{
                 borderColor: "var(--nerdvana-border)",
                 backgroundColor: "var(--nerdvana-message-bg)"

@@ -27,8 +27,8 @@ export default function ItemPage({
           }}
         />
 
-        <main className="px-6 md:px-12 py-8 md:py-12">
-          <article className="max-w-4xl mx-auto">
+        <main className="px-4 sm:px-6 lg:px-10 xl:px-12 py-6 sm:py-8 md:py-12">
+          <article className="max-w-5xl mx-auto">
             {!item ? (
               <section
                 className="mt-8 border-[2px] p-5 md:p-7 transition-colors duration-300"
@@ -38,7 +38,7 @@ export default function ItemPage({
                 }}
               >
                 <h1
-                  className="text-3xl md:text-5xl font-black tracking-[-0.03em] leading-tight uppercase"
+                  className="text-[clamp(2rem,8.6vw,3.2rem)] font-black tracking-[-0.03em] leading-tight uppercase"
                   style={{
                     fontFamily: 'Impact, "Arial Black", sans-serif',
                     color: "var(--nerdvana-text)"
@@ -47,7 +47,7 @@ export default function ItemPage({
                   Item Not Found
                 </h1>
                 <p
-                  className="mt-4 text-[1rem] leading-7"
+                  className="mt-4 text-[0.98rem] sm:text-[1rem] leading-7"
                   style={{
                     fontFamily: '"Times New Roman", serif',
                     color: "var(--nerdvana-text)"
@@ -56,7 +56,7 @@ export default function ItemPage({
                   This entry does not exist in the current mock index.
                 </p>
                 <button
-                  className="nerdvana-clickable mt-5 text-xs md:text-sm uppercase tracking-[0.14em] border-[2px] px-4 py-2"
+                  className="nerdvana-clickable mt-5 text-xs md:text-sm uppercase tracking-[0.14em] border-[2px] px-4 py-2.5"
                   style={{
                     fontFamily: '"Courier New", monospace',
                     borderColor: "var(--nerdvana-border)",
@@ -71,7 +71,7 @@ export default function ItemPage({
             ) : (
               <>
                 <h1
-                  className="text-3xl md:text-5xl font-black tracking-[-0.03em] leading-tight uppercase"
+                  className="text-[clamp(2rem,8.6vw,3.2rem)] font-black tracking-[-0.03em] leading-tight uppercase"
                   style={{
                     fontFamily: 'Impact, "Arial Black", sans-serif',
                     color: "var(--nerdvana-text)"
@@ -80,7 +80,7 @@ export default function ItemPage({
                   {item.title}
                 </h1>
                 <p
-                  className="mt-3 text-xs md:text-sm uppercase tracking-[0.16em]"
+                  className="mt-3 text-[0.68rem] sm:text-xs md:text-sm uppercase tracking-[0.16em]"
                   style={{
                     fontFamily: '"Courier New", monospace',
                     color: "var(--nerdvana-accent)"
@@ -90,14 +90,14 @@ export default function ItemPage({
                 </p>
 
                 <section
-                  className="mt-8 border-[2px] p-5 md:p-7 transition-colors duration-300"
+                  className="mt-6 sm:mt-8 border-[2px] p-4 sm:p-5 md:p-7 transition-colors duration-300"
                   style={{
                     borderColor: "var(--nerdvana-border)",
                     backgroundColor: "var(--nerdvana-message-bg)"
                   }}
                 >
                   <p
-                    className="text-[1rem] leading-7"
+                    className="text-[0.98rem] sm:text-[1rem] leading-7"
                     style={{
                       fontFamily: '"Times New Roman", serif',
                       color: "var(--nerdvana-text)"
@@ -181,7 +181,7 @@ export default function ItemPage({
                       {item.questions.map((question) => (
                         <button
                           key={question}
-                          className="nerdvana-clickable text-[0.72rem] md:text-[0.78rem] uppercase tracking-[0.09em] px-3 py-1.5 border-[1.8px] transition-all duration-300 hover:-translate-y-0.5 text-left"
+                          className="nerdvana-clickable text-[0.68rem] sm:text-[0.72rem] md:text-[0.78rem] uppercase tracking-[0.09em] px-3 py-2 border-[1.8px] transition-all duration-300 hover:-translate-y-0.5 text-left"
                           style={{
                             fontFamily: '"Courier New", monospace',
                             borderColor: "var(--nerdvana-border)",

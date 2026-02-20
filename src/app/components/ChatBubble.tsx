@@ -27,7 +27,7 @@ export default function ChatBubble({
             className={`mb-4 flex flex-col ${isUser ? "items-end" : "items-start"}`}
         >
             <div
-                className={`max-w-[85%] md:max-w-[75%] border px-5 py-3.5 ${isUser ? "ml-auto" : "mr-auto"
+                className={`w-full max-w-[96%] sm:max-w-[90%] md:max-w-[78%] border px-4 sm:px-5 py-3.5 ${isUser ? "ml-auto" : "mr-auto"
                     }`}
                 style={{
                     borderColor: warning ? "var(--nerdvana-accent)" : "var(--nerdvana-border)",
@@ -38,7 +38,8 @@ export default function ChatBubble({
                     color: "var(--nerdvana-text)",
                     fontSize: "0.96rem",
                     lineHeight: "1.6",
-                    position: "relative"
+                    position: "relative",
+                    overflowWrap: "anywhere"
                 }}
             >
                 <div
@@ -150,12 +151,12 @@ export default function ChatBubble({
 
             {/* Follow-up Suggestions */}
             {!isUser && suggestions && suggestions.length > 0 && (
-                <div className="mt-2 ml-1 flex flex-wrap gap-2 max-w-[85%] md:max-w-[75%]">
+                <div className="mt-2 ml-1 flex flex-wrap gap-2 w-full max-w-[96%] sm:max-w-[90%] md:max-w-[78%]">
                     {suggestions.map((suggestion, idx) => (
                         <button
                             key={idx}
                             onClick={() => onSuggestionClick?.(suggestion)}
-                            className="text-[0.7rem] px-3 py-1.5 rounded-full border transition-colors duration-200 hover:bg-[var(--nerdvana-border)] text-left"
+                            className="text-[0.68rem] sm:text-[0.7rem] px-3 py-2 rounded-full border transition-colors duration-200 hover:bg-[var(--nerdvana-border)] text-left"
                             style={{
                                 fontFamily: '"Courier New", monospace',
                                 borderColor: "var(--nerdvana-border)",

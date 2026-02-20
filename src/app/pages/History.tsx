@@ -109,11 +109,11 @@ export default function HistoryPage({ onNavigatePage }: HistoryPageProps) {
       <div className="fixed inset-0 pointer-events-none paper-texture nerdvana-paper-texture-conversation" />
       <div className="relative flex-1 flex flex-col">
         <Header onNavigate={onNavigatePage} />
-        <main className="px-6 md:px-12 py-8 md:py-12 flex-1">
-          <article className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-between gap-3">
+        <main className="px-4 sm:px-6 lg:px-10 xl:px-12 py-6 sm:py-8 md:py-12 flex-1">
+          <article className="max-w-5xl mx-auto">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <h1
-                className="text-3xl md:text-5xl font-black tracking-[-0.03em] leading-tight uppercase"
+                className="text-[clamp(2rem,8.6vw,3.2rem)] font-black tracking-[-0.03em] leading-tight uppercase"
                 style={{ fontFamily: 'Impact, "Arial Black", sans-serif', color: "var(--nerdvana-text)" }}
               >
                 History
@@ -121,7 +121,7 @@ export default function HistoryPage({ onNavigatePage }: HistoryPageProps) {
               {user && (
                 <button
                   type="button"
-                  className="nerdvana-clickable border-[2px] px-3 py-1.5 text-[0.68rem] uppercase tracking-[0.12em]"
+                  className="nerdvana-clickable border-[2px] px-3 py-2 text-[0.66rem] sm:text-[0.68rem] uppercase tracking-[0.12em]"
                   style={{ fontFamily: '"Courier New", monospace', borderColor: "var(--nerdvana-border)", color: "var(--nerdvana-text)" }}
                   onClick={() => {
                     clearAllHistory().catch(() => undefined);
@@ -153,7 +153,7 @@ export default function HistoryPage({ onNavigatePage }: HistoryPageProps) {
                 {items.map((item) => (
                   <div
                     key={item.id}
-                    className="border p-3 md:p-4 flex items-start justify-between gap-3 nerdvana-clickable transition-colors hover:bg-[rgba(255,255,255,0.03)]"
+                    className="border p-3 md:p-4 flex flex-col sm:flex-row items-start justify-between gap-3 nerdvana-clickable transition-colors hover:bg-[rgba(255,255,255,0.03)]"
                     style={{ borderColor: "var(--nerdvana-border)", backgroundColor: "var(--nerdvana-surface)", cursor: "pointer" }}
                     onClick={() => handleHistoryClick(item)}
                   >
@@ -173,7 +173,7 @@ export default function HistoryPage({ onNavigatePage }: HistoryPageProps) {
                     </div>
                     <button
                       type="button"
-                      className="nerdvana-clickable shrink-0 border px-2 py-1 text-[0.62rem] uppercase tracking-[0.12em] z-10 hover:bg-red-900/20"
+                      className="nerdvana-clickable shrink-0 border px-2 py-1.5 text-[0.62rem] uppercase tracking-[0.12em] z-10 hover:bg-red-900/20"
                       style={{ fontFamily: '"Courier New", monospace', borderColor: "var(--nerdvana-border)", color: "var(--nerdvana-text)" }}
                       onClick={(e) => {
                         deleteHistoryItem(e, item.id).catch(() => undefined);

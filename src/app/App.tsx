@@ -104,14 +104,14 @@ function LandingPage({
   };
 
   return (
-    <div className="min-h-screen w-full relative overflow-hidden flex flex-col transition-colors duration-300" style={{ backgroundColor: "var(--nerdvana-bg)" }}>
+    <div className="min-h-screen w-full relative overflow-x-hidden overflow-y-hidden flex flex-col transition-colors duration-300" style={{ backgroundColor: "var(--nerdvana-bg)" }}>
       <Header
         onNavigate={(page) => {
           onNavigatePage(page);
         }}
       />
 
-      <div className="flex-1 flex items-center justify-center px-6 py-8 md:py-12">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-10 xl:px-12 py-6 sm:py-8 md:py-12">
         <div
           className="deadpool-bg fixed inset-0 pointer-events-none bg-no-repeat"
           style={{ backgroundImage: "url(/image.jpg)" }}
@@ -121,13 +121,13 @@ function LandingPage({
         <div className="fixed -bottom-20 left-1/3 w-72 h-72 rounded-full blur-3xl pointer-events-none transition-opacity duration-300 nerdvana-gradient-dark" />
         <div className="fixed inset-0 pointer-events-none transition-opacity duration-300 nerdvana-vignette" />
 
-        <div className="relative z-10 w-full max-w-3xl mx-auto text-center">
+        <div className="relative z-10 w-full max-w-4xl mx-auto text-center">
           <motion.h1
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             whileHover={{ scale: 1.03 }}
             transition={{ duration: 0.3 }}
-            className="nerdvana-clickable text-[clamp(3.5rem,11vw,6.8rem)] font-black tracking-[-0.04em] leading-[0.85] uppercase mb-2 cursor-pointer transition-colors duration-300"
+            className="nerdvana-clickable text-[clamp(2.4rem,14vw,6.8rem)] font-black tracking-[-0.04em] leading-[0.85] uppercase mb-2 cursor-pointer transition-colors duration-300"
             style={{
               fontFamily: 'Impact, "Arial Black", sans-serif',
               color: "var(--nerdvana-text)"
@@ -143,7 +143,7 @@ function LandingPage({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: "easeOut" }}
-            className="text-[1.0625rem] md:text-[1.2rem] mb-6 tracking-wide transition-colors duration-300"
+            className="text-[0.95rem] sm:text-[1.0625rem] md:text-[1.2rem] mb-5 sm:mb-6 tracking-wide transition-colors duration-300"
             style={{
               fontFamily: '"Courier New", monospace',
               color: "var(--nerdvana-text)"
@@ -152,14 +152,14 @@ function LandingPage({
             {UNIVERSE_TAGLINES[taglineIndex]}
           </motion.p>
 
-          <div className="flex flex-wrap justify-center gap-2 mb-5">
+          <div className="flex flex-wrap justify-center gap-2 mb-4 sm:mb-5">
             {UNIVERSE_OPTIONS.map((option) => {
               const active = selectedUniverse === option;
               return (
                 <button
                   key={option}
                   onClick={() => onSetUniverse(option)}
-                  className={`px-3 py-1.5 text-xs md:text-sm uppercase tracking-[0.12em] border-[2px] transition-all duration-300 ${active
+                  className={`px-3 py-2 text-[0.68rem] sm:text-xs md:text-sm uppercase tracking-[0.12em] border-[2px] transition-all duration-300 ${active
                     ? "shadow-[2px_2px_0_var(--nerdvana-border)]"
                     : "hover:-translate-y-0.5 hover:shadow-[1px_1px_0_var(--nerdvana-border)]"
                     }`}
@@ -203,7 +203,7 @@ function LandingPage({
                 onFocus={() => onSetFocused(true)}
                 onBlur={() => onSetFocused(false)}
                 placeholder={UNIVERSE_PLACEHOLDERS[selectedUniverse][placeholderIndex]}
-                className={`w-full text-[1.0625rem] md:text-[1.2rem] px-5 md:px-6 py-4 md:py-5 focus:outline-none tracking-wide transition-all duration-300 nerdvana-input ${isFocused ? "cursor-help" : ""
+                className={`w-full text-[1rem] sm:text-[1.0625rem] md:text-[1.2rem] px-4 sm:px-5 md:px-6 py-3.5 sm:py-4 md:py-5 focus:outline-none tracking-wide transition-all duration-300 nerdvana-input ${isFocused ? "cursor-help" : ""
                   }`}
                 style={{
                   fontFamily: '"Times New Roman", serif',
@@ -230,12 +230,12 @@ function LandingPage({
             </div>
           </motion.div>
 
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
+          <div className="mt-4 sm:mt-5 flex flex-wrap justify-center gap-2">
             {TRENDING_MYSTERIES[selectedUniverse].map((prompt) => (
               <button
                 key={prompt}
                 onClick={() => onSubmit(prompt)}
-                className="text-[0.72rem] md:text-[0.78rem] uppercase tracking-[0.09em] px-3 py-1.5 border-[1.8px] transition-all duration-300 hover:-translate-y-0.5"
+                className="text-[0.68rem] sm:text-[0.72rem] md:text-[0.78rem] uppercase tracking-[0.09em] px-3 py-2 border-[1.8px] transition-all duration-300 hover:-translate-y-0.5"
                 style={{
                   fontFamily: '"Courier New", monospace',
                   borderColor: "var(--nerdvana-border)",
@@ -323,13 +323,7 @@ function LandingPage({
 
           @media (max-width: 1024px) {
             .deadpool-bg {
-              background-position: 50% bottom;
-              background-size: 100%;
-              opacity: 1;
-            }
-
-            .dark .deadpool-bg {
-              opacity: 1;
+              display: none;
             }
           }
 

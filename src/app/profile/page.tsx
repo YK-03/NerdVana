@@ -124,7 +124,7 @@ export default function ProfilePage({ onNavigatePage }: ProfilePageProps) {
         <div className="fixed inset-0 pointer-events-none paper-texture nerdvana-paper-texture-conversation" />
         <div className="relative">
           <Header onNavigate={onNavigatePage} />
-          <main className="px-6 md:px-12 py-8 md:py-12">
+          <main className="px-4 sm:px-6 lg:px-10 xl:px-12 py-6 sm:py-8 md:py-12">
             <section className="archive-main">
               <div className="archive-header">
                 <p className="archive-label">PROFILE ARCHIVE</p>
@@ -156,14 +156,14 @@ export default function ProfilePage({ onNavigatePage }: ProfilePageProps) {
           }
           .nerdvana-paper-texture-conversation { opacity: 0.04; transition: opacity 0.3s ease; }
           .dark .nerdvana-paper-texture-conversation { opacity: 0.08; }
-          .archive-main { max-width: 900px; margin: 120px auto; font-family: inherit; text-align: left; }
-          .archive-header { border: 1px solid var(--nerdvana-border); background: var(--nerdvana-surface); padding: 14px 16px; }
+          .archive-main { max-width: min(56rem, 100%); margin: clamp(2rem, 8vw, 6rem) auto; font-family: inherit; text-align: left; }
+          .archive-header { border: 1px solid var(--nerdvana-border); background: var(--nerdvana-surface); padding: clamp(0.75rem, 2.2vw, 0.9rem) clamp(0.85rem, 2.8vw, 1rem); }
           .archive-label { font-size: 0.68rem; letter-spacing: 0.16em; opacity: 0.7; text-transform: uppercase; font-family: "Courier New", monospace; color: var(--nerdvana-text); }
           .archive-label + .archive-label { margin-top: 6px; }
           .archive-modules { margin-top: 14px; display: grid; gap: 10px; }
-          .archive-module { border: 1px dashed var(--nerdvana-border); background: var(--nerdvana-surface); padding: 12px 14px; opacity: 0.6; font-family: "Times New Roman", serif; color: var(--nerdvana-text); transition: transform 180ms ease, border-color 180ms ease, opacity 180ms ease; }
+          .archive-module { border: 1px dashed var(--nerdvana-border); background: var(--nerdvana-surface); padding: clamp(0.7rem, 2.4vw, 0.8rem) clamp(0.8rem, 2.6vw, 0.9rem); opacity: 0.6; font-family: "Times New Roman", serif; color: var(--nerdvana-text); transition: transform 180ms ease, border-color 180ms ease, opacity 180ms ease; }
           .archive-module:hover { transform: translateX(3px); border-color: var(--nerdvana-accent); opacity: 0.86; }
-          .profileSignInBtn { margin-top: 16px; padding: 6px 14px; border: 2px solid var(--nerdvana-border); box-shadow: 2px 2px 0 var(--nerdvana-accent); font-size: 0.7rem; letter-spacing: 0.15em; font-family: "Courier New", monospace; text-transform: uppercase; }
+          .profileSignInBtn { margin-top: 16px; padding: 9px 14px; border: 2px solid var(--nerdvana-border); box-shadow: 2px 2px 0 var(--nerdvana-accent); font-size: 0.7rem; letter-spacing: 0.15em; font-family: "Courier New", monospace; text-transform: uppercase; }
           .auth-button { background-color: var(--nerdvana-border); border-color: var(--nerdvana-border); color: var(--nerdvana-surface); transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease; }
           .auth-button:hover { background-color: var(--nerdvana-accent); border-color: var(--nerdvana-accent); transform: translateY(-1px); }
         `}</style>
@@ -176,11 +176,11 @@ export default function ProfilePage({ onNavigatePage }: ProfilePageProps) {
       <div className="fixed inset-0 pointer-events-none paper-texture nerdvana-paper-texture-conversation" />
       <div className="relative">
         <Header onNavigate={onNavigatePage} />
-        <main className="px-6 md:px-12 py-8 md:py-12">
+        <main className="px-4 sm:px-6 lg:px-10 xl:px-12 py-6 sm:py-8 md:py-12">
           <article className="profile-shell max-w-3xl mx-auto border p-5 md:p-8">
-            <div className="border p-4 md:p-5 flex items-center gap-4" style={{ borderColor: "var(--nerdvana-border)", backgroundColor: "var(--nerdvana-surface)" }}>
+            <div className="border p-4 md:p-5 flex items-center gap-4 flex-wrap" style={{ borderColor: "var(--nerdvana-border)", backgroundColor: "var(--nerdvana-surface)" }}>
               <div>
-                <h1 className="text-2xl md:text-3xl font-black tracking-[-0.03em] uppercase" style={{ fontFamily: 'Impact, "Arial Black", sans-serif', color: "var(--nerdvana-text)" }}>
+                <h1 className="text-[clamp(1.6rem,7vw,1.9rem)] md:text-3xl font-black tracking-[-0.03em] uppercase" style={{ fontFamily: 'Impact, "Arial Black", sans-serif', color: "var(--nerdvana-text)" }}>
                   {`Hi, ${username} !`}
                 </h1>
                 <p className="mt-1 text-[0.72rem] uppercase tracking-[0.14em]" style={{ fontFamily: '"Courier New", monospace', color: "var(--nerdvana-text)", opacity: 0.75 }}>
@@ -214,14 +214,14 @@ export default function ProfilePage({ onNavigatePage }: ProfilePageProps) {
                 type="button"
                 disabled={!canSaveUsername || savingUsername}
                 onClick={onSaveUsername}
-                className="nerdvana-clickable mt-4 border-[2px] px-3 py-1.5 text-[0.68rem] uppercase tracking-[0.12em] disabled:opacity-60"
+                className="nerdvana-clickable mt-4 border-[2px] px-3 py-2 text-[0.68rem] uppercase tracking-[0.12em] disabled:opacity-60"
                 style={{ fontFamily: '"Courier New", monospace', borderColor: "var(--nerdvana-border)", color: "var(--nerdvana-text)" }}
               >
                 {savingUsername ? "Saving..." : "Save Settings"}
               </button>
             </section>
 
-            <section className="grid md:grid-cols-2 gap-4 mt-6">
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
               <div className="control-card border p-4">
                 <p className="text-[0.7rem] uppercase tracking-[0.14em]" style={{ fontFamily: '"Courier New", monospace', color: "var(--nerdvana-text)", opacity: 0.75 }}>
                   Saved Lorebooks
@@ -230,7 +230,7 @@ export default function ProfilePage({ onNavigatePage }: ProfilePageProps) {
                   {savedCount}
                 </p>
                 <button
-                  className="nerdvana-clickable mt-4 border-[2px] px-3 py-1.5 text-[0.68rem] uppercase tracking-[0.12em]"
+                  className="nerdvana-clickable mt-4 border-[2px] px-3 py-2 text-[0.68rem] uppercase tracking-[0.12em]"
                   style={{ fontFamily: '"Courier New", monospace', borderColor: "var(--nerdvana-border)", color: "var(--nerdvana-text)" }}
                   onClick={() => {
                     window.history.pushState({}, "", "/saved");

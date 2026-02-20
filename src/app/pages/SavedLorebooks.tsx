@@ -113,10 +113,10 @@ export default function SavedLorebooks({ onNavigatePage }: SavedLorebooksProps) 
       <div className="fixed inset-0 pointer-events-none paper-texture nerdvana-paper-texture-conversation" />
       <div className="relative flex-1 flex flex-col">
         <Header onNavigate={onNavigatePage} />
-        <main className="px-6 md:px-12 py-8 md:py-12 flex-1">
-          <article className="max-w-5xl mx-auto">
+        <main className="px-4 sm:px-6 lg:px-10 xl:px-12 py-6 sm:py-8 md:py-12 flex-1">
+          <article className="max-w-6xl mx-auto">
             <h1
-              className="text-3xl md:text-5xl font-black tracking-[-0.03em] leading-tight uppercase"
+              className="text-[clamp(2rem,8.6vw,3.2rem)] font-black tracking-[-0.03em] leading-tight uppercase"
               style={{ fontFamily: 'Impact, "Arial Black", sans-serif', color: "var(--nerdvana-text)" }}
             >
               Saved Lorebooks
@@ -139,7 +139,7 @@ export default function SavedLorebooks({ onNavigatePage }: SavedLorebooksProps) 
                 </button>
               </div>
             ) : (
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-6 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
                 {lorebooks.map((item) => (
                   <div
                     key={item.id}
@@ -172,7 +172,7 @@ export default function SavedLorebooks({ onNavigatePage }: SavedLorebooksProps) 
 
                     <button
                       onClick={(e) => handleDelete(e, item.id)}
-                      className="absolute top-2 right-2 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:text-red-500 rounded-md"
+                      className="absolute top-2 right-2 p-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 hover:text-red-500 rounded-md"
                       style={{ color: "var(--nerdvana-text)" }}
                       title="Delete Lorebook"
                     >

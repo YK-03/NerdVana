@@ -9,7 +9,7 @@ interface UserDropdownProps {
 function UserDropdown({ onNavigate, onLogout }: UserDropdownProps) {
   return (
     <motion.div
-      className="absolute right-0 top-full mt-2 z-50 min-w-[220px] border-[2px] p-1"
+      className="absolute right-0 top-full mt-2 z-50 min-w-[11rem] w-[min(82vw,14rem)] border-[2px] p-1"
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.15 }}

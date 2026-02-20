@@ -23,10 +23,10 @@ export default function ExplorePage({
           }}
         />
 
-        <main className="px-6 md:px-12 py-8 md:py-12">
-          <article className="max-w-4xl mx-auto">
+        <main className="px-4 sm:px-6 lg:px-10 xl:px-12 py-6 sm:py-8 md:py-12">
+          <article className="max-w-5xl mx-auto">
             <h1
-              className="text-3xl md:text-5xl font-black tracking-[-0.03em] leading-tight uppercase"
+              className="text-[clamp(2rem,8.6vw,3.2rem)] font-black tracking-[-0.03em] leading-tight uppercase"
               style={{
                 fontFamily: 'Impact, "Arial Black", sans-serif',
                 color: "var(--nerdvana-text)"
@@ -35,7 +35,7 @@ export default function ExplorePage({
               Explore
             </h1>
             <p
-              className="mt-3 text-sm md:text-base leading-relaxed"
+              className="mt-3 text-[0.95rem] sm:text-sm md:text-base leading-relaxed"
               style={{
                 fontFamily: '"Times New Roman", serif',
                 color: "var(--nerdvana-text)",
@@ -46,17 +46,17 @@ export default function ExplorePage({
             </p>
 
             <section
-              className="mt-8 border-[2px] p-5 md:p-7 transition-colors duration-300"
+              className="mt-6 sm:mt-8 border-[2px] p-4 sm:p-5 md:p-7 transition-colors duration-300"
               style={{
                 borderColor: "var(--nerdvana-border)",
                 backgroundColor: "var(--nerdvana-message-bg)"
               }}
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
                 {discoverItems.map((item) => (
                   <button
                     key={item.slug}
-                    className="nerdvana-clickable text-left border-[2px] p-4 md:p-5 transition-all duration-300 hover:-translate-y-0.5"
+                    className="nerdvana-clickable text-left border-[2px] p-4 md:p-5 transition-all duration-300 hover:-translate-y-0.5 h-full"
                     style={{
                       borderColor: "var(--nerdvana-border)",
                       backgroundColor: "var(--nerdvana-surface)"
@@ -64,7 +64,7 @@ export default function ExplorePage({
                     onClick={() => onOpenItem(item.slug)}
                   >
                     <h2
-                      className="text-xl md:text-2xl uppercase tracking-[-0.02em]"
+                      className="text-[clamp(1.15rem,5vw,1.55rem)] uppercase tracking-[-0.02em]"
                       style={{
                         fontFamily: 'Impact, "Arial Black", sans-serif',
                         color: "var(--nerdvana-text)"
@@ -85,7 +85,7 @@ export default function ExplorePage({
                       {item.type}
                     </span>
                     <p
-                      className="mt-3 text-[0.98rem] leading-7"
+                      className="mt-3 text-[0.95rem] sm:text-[0.98rem] leading-7"
                       style={{
                         fontFamily: '"Times New Roman", serif',
                         color: "var(--nerdvana-text)"
