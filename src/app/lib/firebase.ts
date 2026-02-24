@@ -4,14 +4,18 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCh2WTlWm8-d_JCqEEYkGt0l3Lt1ALtlzw",
-  authDomain: "nerdvana-project-firebase.firebaseapp.com",
-  projectId: "nerdvana-project-firebase",
-  storageBucket: "nerdvana-project-firebase.firebasestorage.app",
-  messagingSenderId: "850212669821",
-  appId: "1:850212669821:web:24579c0e85303c835a2414",
-  measurementId: "G-P7WZXLBBP5"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
+
+if (!firebaseConfig.apiKey) {
+  throw new Error("Missing Firebase config. Did you set VITE_FIREBASE_* env vars?");
+}
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;

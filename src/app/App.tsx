@@ -359,6 +359,22 @@ export default function App() {
   useEffect(() => {
     if (loading) return;
 
+    // If a user is already authenticated and lands on the marketing page,
+    // send them straight to /home instead of showing marketing.
+    if (user && pathname === "/") {
+      window.history.replaceState({}, "", "/home");
+      setPathname("/home");
+      setQuestion("");
+      if (typeof window !== "undefined") {
+        window.sessionStorage.removeItem("nerdvana-auth-intent");
+      }
+      prevUserRef.current = user;
+      if (!hasResolvedAuthRef.current) {
+        hasResolvedAuthRef.current = true;
+      }
+      return;
+    }
+
     const signInIntent =
       typeof window !== "undefined" && window.sessionStorage.getItem("nerdvana-auth-intent") === "signin";
 
@@ -379,7 +395,7 @@ export default function App() {
       hasResolvedAuthRef.current = true;
     }
     prevUserRef.current = user;
-  }, [loading, user]);
+  }, [loading, pathname, user]);
 
   useEffect(() => {
     if (pathname === "/home") {
