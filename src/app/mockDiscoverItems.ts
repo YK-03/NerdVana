@@ -1,8 +1,10 @@
 export interface DiscoverItem {
   slug: string;
   title: string;
+  tag?: string;
   type: string;
   description: string;
+  image?: string;
   overview: string;
   whyThisMatters: string;
   themes: string[];
@@ -13,8 +15,10 @@ export const discoverItems: DiscoverItem[] = [
   {
     slug: "inception",
     title: "Inception",
+    tag: "Movie",
     type: "Movie",
     description: "Dream layers, memory, and the cost of closure.",
+    image: "/explore/wp13158517-spinning-wallpapers.jpg",
     overview:
       "Inception follows Cobb's final extraction mission, where layered dream architecture blurs strategic deception with unresolved guilt and family longing.",
     whyThisMatters:
@@ -29,8 +33,10 @@ export const discoverItems: DiscoverItem[] = [
   {
     slug: "interstellar",
     title: "Interstellar",
+    tag: "Movie",
     type: "Movie",
     description: "Cosmic survival framed through family and causality.",
+    image: "/explore/wp12733462-interstellar-pc-wallpapers.jpg",
     overview:
       "Interstellar explores humanity's extinction risk, using relativistic space travel and a closed causal loop to connect science, sacrifice, and parent-child bonds.",
     whyThisMatters:
@@ -45,8 +51,10 @@ export const discoverItems: DiscoverItem[] = [
   {
     slug: "dune",
     title: "Dune",
+    tag: "Book / Movie",
     type: "Book / Movie",
     description: "Power, prophecy, ecology, and political control.",
+    image: "/explore/wp11225352-dune-4k-wallpapers.jpg",
     overview:
       "Dune tracks Paul Atreides' rise within imperial conflict, where religion, resource economics, and long-term strategy collide on Arrakis.",
     whyThisMatters:
@@ -61,8 +69,10 @@ export const discoverItems: DiscoverItem[] = [
   {
     slug: "batman",
     title: "Batman",
+    tag: "Comic",
     type: "Comic",
     description: "Justice, fear, and moral boundaries in Gotham.",
+    image: "/explore/wp15935243-batman-in-rain-wallpapers.jpg",
     overview:
       "Batman narratives examine vigilantism, trauma, and institutional failure through recurring conflicts between order, vengeance, and symbolic identity.",
     whyThisMatters:
@@ -77,8 +87,10 @@ export const discoverItems: DiscoverItem[] = [
   {
     slug: "attack-on-titan",
     title: "Attack on Titan",
+    tag: "Anime",
     type: "Anime",
     description: "Freedom, war cycles, and inherited violence.",
+    image: "/explore/wp9568351-attack-on-titan-uhd-wallpapers.jpg",
     overview:
       "Attack on Titan escalates from survival horror to political tragedy, focusing on intergenerational conflict, propaganda, and the ethics of retaliation.",
     whyThisMatters:

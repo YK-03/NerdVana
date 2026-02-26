@@ -1,9 +1,83 @@
 import Header from "../components/Header";
 import { discoverItems } from "../mockDiscoverItems";
+import { motion } from "motion/react";
 
 interface ExplorePageProps {
   onOpenItem: (slug: string) => void;
   onNavigatePage: (page: string) => void;
+}
+
+interface ExploreCardProps {
+  item: {
+    slug: string;
+    title: string;
+    description: string;
+    type?: string;
+    tag?: string;
+    image?: string;
+  };
+  onOpenItem: (slug: string) => void;
+}
+
+function ExploreCard({ item, onOpenItem }: ExploreCardProps) {
+  return (
+    <motion.button
+      key={item.slug}
+      className="group nerdvana-clickable relative overflow-hidden text-left border-[2px] p-4 md:p-5 transition-all duration-300 h-full"
+      style={{
+        borderColor: "var(--nerdvana-border)",
+        backgroundColor: "var(--nerdvana-surface)"
+      }}
+      whileHover={{
+        y: -2,
+        boxShadow: "0 10px 18px rgba(26, 25, 24, 0.14)"
+      }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      onClick={() => onOpenItem(item.slug)}
+    >
+      {item.image && (
+        <img
+          src={item.image}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover grayscale contrast-125 opacity-[0.18] transition-opacity duration-300 group-hover:opacity-[0.32]"
+        />
+      )}
+
+      <div className="relative z-10">
+        <h2
+          className="text-[clamp(1.15rem,5vw,1.55rem)] uppercase tracking-[-0.02em]"
+          style={{
+            fontFamily: 'Impact, "Arial Black", sans-serif',
+            color: "var(--nerdvana-text)"
+          }}
+        >
+          {item.title}
+        </h2>
+        <span
+          className="mt-2 inline-flex items-center text-[0.64rem] md:text-[0.7rem] uppercase tracking-[0.12em] border px-2 py-1"
+          style={{
+            fontFamily: '"Courier New", monospace',
+            color: "var(--nerdvana-accent)",
+            borderColor: "var(--nerdvana-border)",
+            backgroundColor: "var(--nerdvana-message-bg)",
+            opacity: 0.88
+          }}
+        >
+          {item.tag ?? item.type ?? "Story"}
+        </span>
+        <p
+          className="mt-3 text-[0.95rem] sm:text-[0.98rem] leading-7"
+          style={{
+            fontFamily: '"Times New Roman", serif',
+            color: "var(--nerdvana-text)"
+          }}
+        >
+          {item.description}
+        </p>
+      </div>
+    </motion.button>
+  );
 }
 
 export default function ExplorePage({
@@ -51,49 +125,10 @@ export default function ExplorePage({
                 borderColor: "var(--nerdvana-border)",
                 backgroundColor: "var(--nerdvana-message-bg)"
               }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
-                {discoverItems.map((item) => (
-                  <button
-                    key={item.slug}
-                    className="nerdvana-clickable text-left border-[2px] p-4 md:p-5 transition-all duration-300 hover:-translate-y-0.5 h-full"
-                    style={{
-                      borderColor: "var(--nerdvana-border)",
-                      backgroundColor: "var(--nerdvana-surface)"
-                    }}
-                    onClick={() => onOpenItem(item.slug)}
-                  >
-                    <h2
-                      className="text-[clamp(1.15rem,5vw,1.55rem)] uppercase tracking-[-0.02em]"
-                      style={{
-                        fontFamily: 'Impact, "Arial Black", sans-serif',
-                        color: "var(--nerdvana-text)"
-                      }}
-                    >
-                      {item.title}
-                    </h2>
-                    <span
-                      className="mt-2 inline-flex items-center text-[0.64rem] md:text-[0.7rem] uppercase tracking-[0.12em] border px-2 py-1"
-                      style={{
-                        fontFamily: '"Courier New", monospace',
-                        color: "var(--nerdvana-accent)",
-                        borderColor: "var(--nerdvana-border)",
-                        backgroundColor: "var(--nerdvana-message-bg)",
-                        opacity: 0.88
-                      }}
-                    >
-                      {item.type}
-                    </span>
-                    <p
-                      className="mt-3 text-[0.95rem] sm:text-[0.98rem] leading-7"
-                      style={{
-                        fontFamily: '"Times New Roman", serif',
-                        color: "var(--nerdvana-text)"
-                      }}
-                    >
-                      {item.description}
-                    </p>
-                  </button>
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
+                  {discoverItems.map((item) => (
+                    <ExploreCard key={item.slug} item={item} onOpenItem={onOpenItem} />
                 ))}
               </div>
             </section>
