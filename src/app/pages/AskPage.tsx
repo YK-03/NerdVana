@@ -3,6 +3,8 @@ import { generateFollowUps } from "../utils/suggestionGenerator";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ChatBubble from "../components/ChatBubble";
+import AIResponse from "../components/AIResponse";
+import SourcesPanel from "../components/SourcesPanel";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { type ResultLink } from "../components/ResultStack";
@@ -12,21 +14,13 @@ import { useIdentityIntent } from "../hooks/useIdentityIntent";
 import { saveCase } from "../utils/caseStorage";
 import { saveCaseCloud } from "../utils/caseCloud";
 import type { MockAnswer } from "../mockAnswers";
-import { resolveStaticAnswerWithAISummary } from "../staticRetriever";
 import { applyIdentityStabilization, isContextValid, resolveContext } from "../itemResolver";
-import { fetchSearchResults } from "../../services/searchService";
 import { auth, db } from "@/firebase";
 import { doc, updateDoc } from "firebase/firestore";
 
 interface AskPageProps {
   question: string;
   onNavigatePage: (page: string) => void;
-}
-
-interface CategorizedResults {
-  canon: ResultLink[];
-  theories: ResultLink[];
-  spoilers: ResultLink[];
 }
 
 interface ConversationMessage {
@@ -36,7 +30,6 @@ interface ConversationMessage {
 
 function readAskQueryParams() {
   const params = new URLSearchParams(window.location.search);
-  const question = params.get("q")?.trim() ?? "";
   const urlItem = params.get("item")?.trim() ?? "";
   const stateItem =
     window.history.state && typeof window.history.state.item === "string"
@@ -44,141 +37,12 @@ function readAskQueryParams() {
       : "";
   const item = urlItem || stateItem;
   return {
-    question,
     item
   };
 }
 
-function truncate(value: string, max = 70) {
-  if (value.length <= max) return value;
-  return `${value.slice(0, Math.max(0, max - 3)).trimEnd()}...`;
-}
-
-function resolveDomain(link: ResultLink) {
-  if (link.source && link.source.trim()) return link.source.trim();
-  try {
-    return new URL(link.url).hostname;
-  } catch {
-    return "source";
-  }
-}
-
-function resolveSourceTag(link: ResultLink) {
-  const text = `${link.url} ${link.source ?? ""}`.toLowerCase();
-  if (text.includes("reddit")) return "reddit";
-  if (text.includes("wikipedia") || text.includes("wiki")) return "wiki";
-  return "article";
-}
-
-function classifyResult(result: ResultLink) {
-  const text = `${result.title ?? ""}${result.snippet ?? ""}`.toLowerCase();
-
-  if (
-    text.includes("ending explained") ||
-    text.includes("official") ||
-    text.includes("wiki") ||
-    text.includes("lore")
-  ) {
-    return "canon";
-  }
-
-  if (text.includes("theory") || text.includes("reddit") || text.includes("discussion")) {
-    return "theories";
-  }
-
-  if (text.includes("ending") || text.includes("spoiler")) {
-    return "spoilers";
-  }
-
-  return "canon";
-}
-
-function renderResult(link: ResultLink, isSpoiler = false) {
-  const domain = resolveDomain(link);
-  const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`;
-
-  return (
-    <a
-      key={`${link.url}-${link.title}`}
-      href={link.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`nerdvana-clickable block border-b py-2 transition-colors duration-150 hover:text-[var(--nerdvana-accent)] ${isSpoiler ? "spoilerCard" : ""
-        }`}
-      style={{
-        borderColor: "var(--nerdvana-border)",
-        color: "var(--nerdvana-text)"
-      }}
-    >
-      <div className="flex items-start gap-2">
-        <img
-          src={faviconUrl}
-          alt=""
-          width={16}
-          height={16}
-          className="mt-[1px] h-4 w-4 shrink-0"
-        />
-        <div className="min-w-0">
-          <p
-            className="text-[0.92rem] leading-5"
-            style={{
-              fontFamily: '"Times New Roman", serif',
-              fontWeight: 700
-            }}
-          >
-            {truncate(link.title || domain)}
-          </p>
-          <p
-            className="text-[0.62rem] uppercase tracking-[0.12em]"
-            style={{
-              fontFamily: '"Courier New", monospace',
-              opacity: 0.84
-            }}
-          >
-            {domain}
-          </p>
-          <div className="mt-1">
-            <span
-              className="border px-1.5 py-[1px] text-[0.56rem] uppercase tracking-[0.08em]"
-              style={{
-                fontFamily: '"Courier New", monospace',
-                borderColor: "var(--nerdvana-border)",
-                opacity: 0.9
-              }}
-            >
-              {resolveSourceTag(link)}
-            </span>
-          </div>
-          <p
-            className="mt-1 text-[0.82rem] leading-5"
-            style={{
-              fontFamily: '"Times New Roman", serif',
-              opacity: 0.96,
-              display: "-webkit-box",
-              WebkitLineClamp: 1,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden"
-            }}
-          >
-            {truncate(link.snippet || link.title || domain, 110)}
-          </p>
-        </div>
-      </div>
-    </a>
-  );
-}
-
-function CategorySection({ title, items, isSpoiler = false }: { title: string; items: ResultLink[]; isSpoiler?: boolean }) {
-  return (
-    <section className="category mt-4">
-      <h3 className="categoryLabel text-[0.68rem] md:text-[0.72rem] uppercase">{title}</h3>
-      <div className="results-list mt-2 space-y-1">{items.map((item) => renderResult(item, isSpoiler))}</div>
-    </section>
-  );
-}
-
 export default function AskPage({
-  question,
+  question: _question,
   onNavigatePage
 }: AskPageProps) {
   const [search, setSearch] = useState(() => window.location.search);
@@ -220,11 +84,7 @@ export default function AskPage({
   const [results, setResults] = useState<ResultLink[]>(
     isRestored && historyState.results ? historyState.results : []
   );
-  const [categorized, setCategorized] = useState<CategorizedResults>({
-    canon: [],
-    theories: [],
-    spoilers: []
-  });
+  const [isInitialAnswerLoading, setIsInitialAnswerLoading] = useState(false);
   const { save: saveCaseMemory } = useInvestigationMemory();
   const [user] = useAuthState(auth);
   const lastSavedCaseKey = useRef("");
@@ -276,7 +136,6 @@ export default function AskPage({
         console.log("Restoring active session from localStorage");
         setAnswer(parsed.answer || { summary: "", categories: [], spoilers: "" });
         setResults(parsed.results || []);
-        setCategorized(parsed.categorized || { canon: [], theories: [], spoilers: [] });
         setConversation(parsed.conversation || []);
       }
     } catch (e) {
@@ -293,11 +152,10 @@ export default function AskPage({
         topic: fullQuestion,
         answer,
         results,
-        categorized,
         conversation
       })
     );
-  }, [fullQuestion, answer, results, categorized, conversation]);
+  }, [fullQuestion, answer, results, conversation]);
 
   useEffect(() => {
     const syncSearch = () => setSearch(window.location.search);
@@ -327,7 +185,7 @@ export default function AskPage({
 
     setAnswer({ summary: "", categories: [], spoilers: "" });
     setResults([]);
-    setCategorized({ canon: [], theories: [], spoilers: [] });
+    setIsInitialAnswerLoading(false);
 
     if (!normalizedQuestion) {
       return () => {
@@ -337,40 +195,49 @@ export default function AskPage({
 
     const runSearch = async () => {
       try {
-        const searchLinks = await fetchSearchResults(normalizedQuestion).catch(() => []);
-        if (isCancelled) return;
-
-        const rawResults = searchLinks.map((link) => ({
-          title: link.title,
-          url: link.url,
-          source: link.source,
-          snippet: link.snippet
-        }));
-
-        const categorizedResults: CategorizedResults = {
-          canon: [],
-          theories: [],
-          spoilers: []
-        };
-        rawResults.forEach((link) => {
-          categorizedResults[classifyResult(link)].push(link);
+        setIsInitialAnswerLoading(true);
+        const response = await fetch("/api/nerdvana-answer", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            query: normalizedQuestion,
+            spoilerMode: chatSpoilers,
+            conversation: []
+          })
         });
 
-        let resolved = null;
-        if (contextIsValid && resolvedItem) {
-          try {
-            resolved = await resolveStaticAnswerWithAISummary(fullQuestion, resolvedItem, {
-              snippets: searchLinks.map((l) => l.snippet).join("\n")
-            });
-          } catch {
-            resolved = null;
-          }
+        if (!response.ok) {
+          throw new Error(`API ${response.status}`);
         }
+
+        const payload = await response.json();
         if (isCancelled) return;
 
+        const rawSources = Array.isArray(payload?.sources) ? payload.sources : [];
+        const aiAnswer = String(payload?.answer ?? "");
+        const rawResults = rawSources
+          .map((source: { title?: string; link?: string }) => {
+            const url = String(source?.link ?? "").trim();
+            let hostname = "";
+            try {
+              hostname = new URL(url).hostname;
+            } catch {
+              hostname = "";
+            }
+
+            return {
+              title: String(source?.title ?? "").trim(),
+              url,
+              source: hostname,
+              snippet: ""
+            } satisfies ResultLink;
+          })
+          .filter((source) => Boolean(source.url));
+
         setResults(rawResults);
-        setCategorized(categorizedResults);
-        setAnswer(resolved ?? { summary: "", categories: [], spoilers: "" });
+        setAnswer({ summary: aiAnswer, categories: [], spoilers: "" });
 
         if (user && normalizedQuestion) {
           const historyState = window.history.state || {};
@@ -384,7 +251,7 @@ export default function AskPage({
             }
             lastSavedQueryRef.current = normalizedQuestion;
 
-            if (historyState.answer && !answer.summary) {
+            if (historyState.answer && !aiAnswer) {
               setAnswer(historyState.answer);
             }
             if (historyState.conversation && conversation.length === 0) {
@@ -419,7 +286,10 @@ export default function AskPage({
         if (isCancelled) return;
         setAnswer({ summary: "", categories: [], spoilers: "" });
         setResults([]);
-        setCategorized({ canon: [], theories: [], spoilers: [] });
+      } finally {
+        if (!isCancelled) {
+          setIsInitialAnswerLoading(false);
+        }
       }
     };
 
@@ -428,22 +298,15 @@ export default function AskPage({
     return () => {
       isCancelled = true;
     };
-  }, [contextIsValid, fullQuestion, resolvedItem, user]);
+  }, [fullQuestion, user]);
 
-  const [resultsSpoilers, setResultsSpoilers] = useState(false);
   const [chatSpoilers, setChatSpoilers] = useState(false);
-
-  const spoilerFilter = (items: ResultLink[]) => {
-    if (resultsSpoilers) return items;
-    const regex = /(ending explained|dies|death|final scene|plot twist|spoiler)/i;
-    return items.filter(r => !regex.test(((r.title || "") + (r.snippet || "")).toLowerCase()));
-  };
   useEffect(() => {
     if (!contextIsValid || isAmbiguous || !resolvedItem) {
       return;
     }
 
-    if (answer.categories.length === 0) {
+    if (!answer.summary.trim()) {
       return;
     }
 
@@ -480,7 +343,7 @@ export default function AskPage({
     }
 
     lastSavedCaseKey.current = caseKey;
-  }, [answer.categories.length, contextIsValid, fullQuestion, isAmbiguous, resolvedItem, saveCaseMemory, user]);
+  }, [answer.summary, contextIsValid, fullQuestion, isAmbiguous, resolvedItem, saveCaseMemory, user]);
 
   const handleFollowUpSubmit = async (e?: React.FormEvent, overrideQuery?: string) => {
     if (e) e.preventDefault();
@@ -530,12 +393,26 @@ export default function AskPage({
 
       const rawData = Array.isArray(payload?.sources) ? payload.sources : [];
       if (rawData.length > 0) {
-        const rawResults = rawData.map((r: any) => ({
-          title: r.title,
-          url: r.url,
-          source: r.url ? new URL(r.url).hostname : "Source",
-          snippet: r.snippet
-        }));
+        const rawResults = rawData
+          .map((r: any) => {
+            const url = String(r?.link ?? "");
+            let source = "Source";
+            if (url) {
+              try {
+                source = new URL(url).hostname;
+              } catch {
+                source = "Source";
+              }
+            }
+
+            return {
+              title: String(r?.title ?? ""),
+              url,
+              source,
+              snippet: ""
+            };
+          })
+          .filter((item) => Boolean(item.url));
 
         // Keep existing search results and only append unseen sources from follow-ups.
         const seen = new Set(results.map((r) => r.url));
@@ -548,16 +425,6 @@ export default function AskPage({
         }
 
         setResults(mergedResults);
-
-        const newCategorized: CategorizedResults = {
-          canon: [],
-          theories: [],
-          spoilers: []
-        };
-        mergedResults.forEach((link: ResultLink) => {
-          newCategorized[classifyResult(link)].push(link);
-        });
-        setCategorized(newCategorized);
       }
 
       setConversation(prev => {
@@ -645,7 +512,6 @@ export default function AskPage({
 
             <div className="mb-4 flex flex-wrap justify-start sm:justify-end gap-3 sm:gap-6 items-center">
               {[
-                { label: "Results Spoilers", checked: resultsSpoilers, set: setResultsSpoilers },
                 { label: "Conversation Spoilers", checked: chatSpoilers, set: setChatSpoilers }
               ].map((sw, idx) => (
                 <label key={idx} className="nerdvana-clickable flex items-center gap-2 group select-none">
@@ -707,26 +573,10 @@ export default function AskPage({
               </div>
             )}
 
-            {spoilerFilter(categorized.canon).length > 0 && (
-              <CategorySection title="CANON RECORDS" items={spoilerFilter(categorized.canon)} />
-            )}
-            {spoilerFilter(categorized.theories).length > 0 && (
-              <CategorySection title="FAN THEORIES" items={spoilerFilter(categorized.theories)} />
-            )}
-            {resultsSpoilers && categorized.spoilers.length > 0 && (
-              <CategorySection title="SPOILER MATERIAL" items={categorized.spoilers} isSpoiler />
-            )}
+            <AIResponse text={answer.summary} isLoading={isInitialAnswerLoading} />
+            <SourcesPanel sources={results.map((result) => ({ title: result.title, link: result.url }))} />
 
-            {!results.length && (
-              <p
-                className="mt-6 text-[0.82rem] uppercase tracking-[0.12em]"
-                style={{ fontFamily: '"Courier New", monospace', opacity: 0.88, color: "var(--nerdvana-text)" }}
-              >
-                No web results yet.
-              </p>
-            )}
-
-            {results.length > 0 && (
+            {fullQuestion && (
               <div className="mt-12 border-t-2 pt-8" style={{ borderColor: "var(--nerdvana-border)" }}>
                 <form onSubmit={handleFollowUpSubmit}>
                   <div
