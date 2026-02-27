@@ -4,7 +4,9 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ChatBubble from "../components/ChatBubble";
 import AIResponse from "../components/AIResponse";
+import ThinkingScreen from "../components/ThinkingScreen";
 import SourcesPanel from "../components/SourcesPanel";
+import { motion } from "motion/react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { type ResultLink } from "../components/ResultStack";
@@ -26,6 +28,11 @@ interface AskPageProps {
 interface ConversationMessage {
   role: "user" | "assistant";
   content: string;
+}
+
+interface ResponseData {
+  answer: MockAnswer;
+  results: ResultLink[];
 }
 
 function readAskQueryParams() {
@@ -84,7 +91,15 @@ export default function AskPage({
   const [results, setResults] = useState<ResultLink[]>(
     isRestored && historyState.results ? historyState.results : []
   );
-  const [isInitialAnswerLoading, setIsInitialAnswerLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [responseData, setResponseData] = useState<ResponseData | null>(
+    isRestored && historyState.answer
+      ? {
+        answer: historyState.answer as MockAnswer,
+        results: (historyState.results as ResultLink[]) ?? []
+      }
+      : null
+  );
   const { save: saveCaseMemory } = useInvestigationMemory();
   const [user] = useAuthState(auth);
   const lastSavedCaseKey = useRef("");
@@ -134,8 +149,14 @@ export default function AskPage({
       const parsed = JSON.parse(saved);
       if (parsed.topic === fullQuestion) {
         console.log("Restoring active session from localStorage");
-        setAnswer(parsed.answer || { summary: "", categories: [], spoilers: "" });
-        setResults(parsed.results || []);
+        const restoredAnswer = parsed.answer || { summary: "", categories: [], spoilers: "" };
+        const restoredResults = parsed.results || [];
+        setAnswer(restoredAnswer);
+        setResults(restoredResults);
+        setResponseData({
+          answer: restoredAnswer,
+          results: restoredResults
+        });
         setConversation(parsed.conversation || []);
       }
     } catch (e) {
@@ -185,7 +206,8 @@ export default function AskPage({
 
     setAnswer({ summary: "", categories: [], spoilers: "" });
     setResults([]);
-    setIsInitialAnswerLoading(false);
+    setResponseData(null);
+    setIsLoading(false);
 
     if (!normalizedQuestion) {
       return () => {
@@ -195,7 +217,7 @@ export default function AskPage({
 
     const runSearch = async () => {
       try {
-        setIsInitialAnswerLoading(true);
+        setIsLoading(true);
         const response = await fetch("/api/nerdvana-answer", {
           method: "POST",
           headers: {
@@ -236,8 +258,10 @@ export default function AskPage({
           })
           .filter((source) => Boolean(source.url));
 
+        const nextAnswer = { summary: aiAnswer, categories: [], spoilers: "" } satisfies MockAnswer;
         setResults(rawResults);
-        setAnswer({ summary: aiAnswer, categories: [], spoilers: "" });
+        setAnswer(nextAnswer);
+        setResponseData({ answer: nextAnswer, results: rawResults });
 
         if (user && normalizedQuestion) {
           const historyState = window.history.state || {};
@@ -253,6 +277,10 @@ export default function AskPage({
 
             if (historyState.answer && !aiAnswer) {
               setAnswer(historyState.answer);
+              setResponseData({
+                answer: historyState.answer as MockAnswer,
+                results: (historyState.results as ResultLink[]) ?? rawResults
+              });
             }
             if (historyState.conversation && conversation.length === 0) {
               setConversation(historyState.conversation);
@@ -286,9 +314,10 @@ export default function AskPage({
         if (isCancelled) return;
         setAnswer({ summary: "", categories: [], spoilers: "" });
         setResults([]);
+        setResponseData(null);
       } finally {
         if (!isCancelled) {
-          setIsInitialAnswerLoading(false);
+          setIsLoading(false);
         }
       }
     };
@@ -548,7 +577,7 @@ export default function AskPage({
               ))}
             </div>
 
-            {fullQuestion && (
+            {!isLoading && fullQuestion && (
               <div className="mb-6 flex justify-start sm:justify-end">
                 <button
                   onClick={handleSaveLorebook}
@@ -573,10 +602,28 @@ export default function AskPage({
               </div>
             )}
 
-            <AIResponse text={answer.summary} isLoading={isInitialAnswerLoading} />
-            <SourcesPanel sources={results.map((result) => ({ title: result.title, link: result.url }))} />
+            {!isLoading && fullQuestion && (
+              <motion.div
+                key={responseData ? `${fullQuestion}-${responseData.answer.summary.length}` : `empty-${fullQuestion}`}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+              >
+                <AIResponse
+                  text={answer.summary}
+                  isLoading={false}
+                  disableProgressiveReveal
+                />
+                <SourcesPanel
+                  sources={results.map((result) => ({
+                    title: result.title,
+                    link: result.url
+                  }))}
+                />
+              </motion.div>
+            )}
 
-            {fullQuestion && (
+            {!isLoading && fullQuestion && (
               <div className="mt-12 border-t-2 pt-8" style={{ borderColor: "var(--nerdvana-border)" }}>
                 <form onSubmit={handleFollowUpSubmit}>
                   <div
@@ -614,7 +661,7 @@ export default function AskPage({
               </div>
             )}
 
-            {conversation.length > 0 && (
+            {!isLoading && conversation.length > 0 && (
               <div className="mt-6 border-t pt-6" style={{ borderColor: "var(--nerdvana-border)" }}>
                 <h3
                   className="mb-4 text-[0.66rem] md:text-[0.72rem] uppercase tracking-[0.18em] sm:tracking-[3px]"
@@ -642,7 +689,7 @@ export default function AskPage({
                     const showWarning = !chatSpoilers && isRisky && msg.role === "assistant";
 
                     const isLast = index === conversation.length - 1;
-                    const isLoading = isGeneratingFollowUp && isLast && msg.role === "assistant";
+                    const isBubbleLoading = isGeneratingFollowUp && isLast && msg.role === "assistant";
 
                     return (
                       <ChatBubble
@@ -655,7 +702,7 @@ export default function AskPage({
                           handleFollowUpSubmit(undefined, s);
                         }}
                         warning={showWarning}
-                        isLoading={isLoading}
+                        isLoading={isBubbleLoading}
                       />
                     );
                   })}
@@ -667,6 +714,7 @@ export default function AskPage({
         </main>
       </div>
       <Footer />
+      <ThinkingScreen isVisible={isLoading} />
 
       <style>{`
         .paper-texture {

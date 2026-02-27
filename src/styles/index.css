@@ -43,3 +43,30 @@ select,
 .dark .nerdvana-clickable {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Crect x='2' y='9' width='10' height='8' rx='2' fill='%23a83228'/%3E%3Crect x='18' y='9' width='10' height='8' rx='2' fill='%23a83228'/%3E%3Crect x='12' y='11' width='6' height='4' fill='%234a4845'/%3E%3Crect x='5' y='12' width='4' height='2' fill='%23f5f1e8'/%3E%3Crect x='21' y='12' width='4' height='2' fill='%23f5f1e8'/%3E%3Cpath d='M15 2 L18 9 L12 9 Z' fill='%234a4845'/%3E%3C/svg%3E") 4 4, pointer !important;
 }
+
+@keyframes thinking-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes thinking-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba(140, 28, 19, 0));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(140, 28, 19, 0.28));
+  }
+}
+
+.animate-thinking-spin {
+  animation: thinking-spin 9s linear infinite;
+}
+
+.animate-thinking-pulse {
+  animation: thinking-pulse 2.8s ease-in-out infinite;
+}

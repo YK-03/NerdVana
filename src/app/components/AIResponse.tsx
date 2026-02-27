@@ -1,18 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 interface AIResponseProps {
   text: string;
   isLoading: boolean;
+  onFirstTokenRendered?: () => void;
+  disableProgressiveReveal?: boolean;
 }
 
-export default function AIResponse({ text, isLoading }: AIResponseProps) {
+export default function AIResponse({
+  text,
+  isLoading,
+  onFirstTokenRendered,
+  disableProgressiveReveal = false
+}: AIResponseProps) {
   const [visibleText, setVisibleText] = useState("");
+  const firstTokenEmittedRef = useRef(false);
 
   useEffect(() => {
     if (!text.trim()) {
       setVisibleText("");
+      firstTokenEmittedRef.current = false;
+      return;
+    }
+
+    if (disableProgressiveReveal) {
+      setVisibleText(text);
       return;
     }
 
@@ -28,7 +42,14 @@ export default function AIResponse({ text, isLoading }: AIResponseProps) {
     }, 16);
 
     return () => window.clearInterval(timer);
-  }, [text]);
+  }, [disableProgressiveReveal, text]);
+
+  useEffect(() => {
+    if (visibleText.length > 0 && !firstTokenEmittedRef.current) {
+      firstTokenEmittedRef.current = true;
+      onFirstTokenRendered?.();
+    }
+  }, [onFirstTokenRendered, visibleText]);
 
   if (!isLoading && !visibleText.trim()) {
     return null;
